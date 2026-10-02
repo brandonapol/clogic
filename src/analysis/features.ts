@@ -94,29 +94,28 @@ export const analysePcm = (pcm: PcmAudio): PcmFeatures => {
   const levelsDb = new Float32Array(frameCount * thirds.length)
   const broad = BROAD_BANDS.map(() => ({ left: 0, right: 0, mid: 0, side: 0, cross: 0 }))
   const thirdPower = new Float64Array(thirds.length)
-  const lRe = new Float64Array(FFT_SIZE)
-  const lIm = new Float64Array(FFT_SIZE)
-  const rRe = new Float64Array(FFT_SIZE)
-  const rIm = new Float64Array(FFT_SIZE)
+  const re = new Float64Array(FFT_SIZE)
+  const im = new Float64Array(FFT_SIZE)
   const binCount = FFT_SIZE / 2 + 1
 
   for (let frame = 0; frame < frameCount; frame++) {
     const start = frame * HOP_SIZE
     for (let i = 0; i < FFT_SIZE; i++) {
       const w = window[i] ?? 0
-      lRe[i] = (left[start + i] ?? 0) * w
-      rRe[i] = (right[start + i] ?? 0) * w
+      re[i] = (left[start + i] ?? 0) * w
+      im[i] = isStereo ? (right[start + i] ?? 0) * w : 0
     }
-    lIm.fill(0)
-    rIm.fill(0)
-    fftInPlace(lRe, lIm, tables)
-    if (isStereo) fftInPlace(rRe, rIm, tables)
+    fftInPlace(re, im, tables)
     thirdPower.fill(0)
     for (let bin = 1; bin < binCount; bin++) {
-      const lr = lRe[bin] ?? 0
-      const li = lIm[bin] ?? 0
-      const rr = isStereo ? (rRe[bin] ?? 0) : lr
-      const ri = isStereo ? (rIm[bin] ?? 0) : li
+      const zr = re[bin] ?? 0
+      const zi = im[bin] ?? 0
+      const nr = re[FFT_SIZE - bin] ?? 0
+      const ni = im[FFT_SIZE - bin] ?? 0
+      const lr = isStereo ? (zr + nr) / 2 : zr
+      const li = isStereo ? (zi - ni) / 2 : zi
+      const rr = isStereo ? (zi + ni) / 2 : lr
+      const ri = isStereo ? (nr - zr) / 2 : li
       const mr = (lr + rr) / 2
       const mi = (li + ri) / 2
       const midPower = (mr * mr + mi * mi) * scale
