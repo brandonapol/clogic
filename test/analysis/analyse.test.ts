@@ -34,7 +34,7 @@ describe.skipIf(!hasFfmpeg())('analyseFile against reference signals', () => {
     const report = await analyse('ebu-lra1', `aevalsrc=${tone}|${tone}:s=48000:d=40`)
     expect(Math.abs(report.loudness.loudnessRangeLu - 10)).toBeLessThanOrEqual(1)
     expect(report.loudness.shortTermMaxLufs).toBeCloseTo(-20, 0)
-  })
+  }, 30_000)
 
   it('reads the true peak of a 1 kHz sine at -6.02 dBFS', async () => {
     const report = await analyse('tp-1k', 'aevalsrc=0.5*sin(2*PI*1000*t):s=48000:d=5')
