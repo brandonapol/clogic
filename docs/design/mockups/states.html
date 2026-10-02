@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>clogic mockup: empty, loading and error states</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="logo" viewBox="0 0 20 20">
+        <rect x="0" y="0" width="20" height="20" rx="5" fill="#4CC2FF" />
+        <path
+          d="M5 6.5v7M8.3 4.5v11M11.7 7.5v5M15 5.5v9"
+          stroke="#08131B"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          fill="none"
+        />
+      </symbol>
+      <symbol id="i-gear" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="2.2" />
+        <path
+          d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></symbol>
+      <symbol id="i-wave" viewBox="0 0 16 16">
+        <path d="M2 8h1.5M5 5v6M8 2.5v11M11 5.5v5M14 8h-1" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></symbol>
+      <symbol id="i-alert" viewBox="0 0 16 16">
+        <path d="M8 2L1.8 13h12.4L8 2zM8 6.5v3M8 11.5v.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M8 7.3v3.7M8 5v.01" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 16 16">
+        <rect x="3" y="7" width="10" height="7" rx="1.5" />
+        <path d="M5.5 7V5a2.5 2.5 0 015 0v2" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 16 16">
+        <path d="M4 1.8h5l3 3V14H4zM9 1.8V5h3M6 9.5l4 0" />
+      </symbol>
+      <symbol id="i-meter" viewBox="0 0 16 16">
+        <path d="M2.5 11a5.5 5.5 0 0111 0M8 11l2.5-3.5M2 13.5h12" />
+      </symbol>
+      <symbol id="i-paste" viewBox="0 0 16 16">
+        <rect x="3.5" y="3" width="9" height="11" rx="1.5" />
+        <path d="M6 3V2h4v1M6 7h4M6 9.5h3" />
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 16 16">
+        <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+        <circle cx="8" cy="8" r="2" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" /></symbol>
+      <symbol id="i-sliders" viewBox="0 0 16 16">
+        <path d="M4 2v12M8 2v12M12 2v12" />
+        <rect x="2.5" y="9" width="3" height="2" rx=".5" />
+        <rect x="6.5" y="4.5" width="3" height="2" rx=".5" />
+        <rect x="10.5" y="7" width="3" height="2" rx=".5" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 16 16">
+        <path
+          d="M2.5 3h4A1.5 1.5 0 018 4.5V14a1.5 1.5 0 00-1.5-1.5h-4zM13.5 3h-4A1.5 1.5 0 008 4.5V14a1.5 1.5 0 011.5-1.5h4z"
+        />
+      </symbol>
+      <symbol id="i-retry" viewBox="0 0 16 16">
+        <path d="M13 8a5 5 0 11-1.5-3.5M13 2.5v2.5h-2.5" />
+      </symbol>
+      <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4" /></symbol>
+    </svg>
+    <section class="panel">
+      <div class="panel-cap">Empty</div>
+      <div class="panel-body">
+        <div class="empty">
+          <svg width="28" height="28" viewBox="0 0 20 20"><use href="#logo" /></svg>
+          <h3>What are we working on?</h3>
+          <p>Bounce your mix or a stem, or ask a Logic question.</p>
+          <div class="suggest">
+            <button class="btn ghost">
+              <svg class="icon sm"><use href="#i-meter" /></svg>Check loudness for streaming
+            </button>
+            <button class="btn ghost">
+              <svg class="icon sm"><use href="#i-wave" /></svg>Compare with a reference track
+            </button>
+            <button class="btn ghost">
+              <svg class="icon sm"><use href="#i-book" /></svg>How do I set up a sidechain?
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-cap">Loading</div>
+      <div class="panel-body">
+        <div class="msg user" style="font-size: var(--fs-meta)">
+          <p>Check masking between bass and kick</p>
+        </div>
+        <div class="tool">
+          <span class="spinner"></span>
+          <span class="name">analyse_masking</span>
+          <span class="time">4 s</span>
+        </div>
+        <div class="card" style="padding: var(--s5)">
+          <div class="card-head" style="margin-bottom: var(--s4)">
+            <span class="label">Reading stems</span>
+            <span class="source">2 of 5</span>
+          </div>
+          <div class="progress"><span></span></div>
+          <div style="display: grid; gap: 8px; margin-top: 14px">
+            <div class="skeleton" style="width: 80%"></div>
+            <div class="skeleton" style="width: 60%"></div>
+            <div class="skeleton" style="width: 70%"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-cap">Error</div>
+      <div class="panel-body">
+        <div class="banner err" role="alert">
+          <svg class="icon"><use href="#i-alert" /></svg>
+          <div>
+            <div class="t">Anthropic rejected the API key</div>
+            <div class="d">It may have been revoked. Your chat history is safe.</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn sm primary">Update key</button>
+          <button class="btn sm ghost">
+            <svg class="icon sm"><use href="#i-retry" /></svg>Retry
+          </button>
+        </div>
+        <div class="banner err" role="alert" style="margin-top: auto">
+          <svg class="icon"><use href="#i-alert" /></svg>
+          <div>
+            <div class="t">Lost connection to the clogic service</div>
+            <div class="d">Analysis and session changes are paused until it reconnects.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </body>
+</html>
