@@ -9,7 +9,7 @@
 
 - Status: proposed
 - Date: 2026-10-02
-- Related: SPIKE-003, #3, SPIKE-007, SPIKE-009, ADR 0009
+- Related: SPIKE-003, #3, SPIKE-007, SPIKE-009, ADR 0001
 
 ## Context
 

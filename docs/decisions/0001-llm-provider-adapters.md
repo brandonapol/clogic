@@ -1,4 +1,4 @@
-# 0009: Thin per-provider LLM adapters over plain fetch
+# 0001: Thin per-provider LLM adapters over plain fetch
 
 - Status: proposed
 - Date: 2026-10-02
