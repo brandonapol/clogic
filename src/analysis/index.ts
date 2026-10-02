@@ -1,0 +1,5 @@
+export * from './types.js'
+export * from './result.js'
+export { analyseFile, analyseStemFolder, analyseStems } from './analyse.js'
+export { DEFAULT_TOOLS, type Tools } from './adapter.js'
+export { compareToReference } from './reference.js'
