@@ -1,4 +1,4 @@
-import { amplitudeToDb, powerToDb, round } from './db.js'
+import { amplitudeToDb, powerRatioDb, powerToDb, round } from './db.js'
 import type { BroadBandEnergy, PcmFeatures } from './features.js'
 import { reportFindings } from './findings.js'
 import type {
@@ -16,9 +16,6 @@ import type {
 
 export const COMPRESSION_PLR_THRESHOLDS = { heavy: 8, moderate: 11, light: 14 } as const
 
-const ratioDb = (numerator: number, denominator: number): number =>
-  denominator > 0 ? powerToDb(numerator / denominator) : powerToDb(0)
-
 const correlationOf = (cross: number, left: number, right: number): number | null => {
   const denominator = Math.sqrt(left * right)
   return denominator > 0 ? round(cross / denominator, 2) : null
@@ -32,7 +29,7 @@ export const spectralBalance = (bands: readonly BroadBandEnergy[]): SpectralBala
       lowHz: b.band.lowHz,
       highHz: b.band.highHz,
       levelDbfs: round(powerToDb(b.mid)),
-      shareDb: round(ratioDb(b.mid, total)),
+      shareDb: round(powerRatioDb(b.mid, total)),
     })),
   }
 }
@@ -45,14 +42,14 @@ export const stereoImage = (features: PcmFeatures): StereoImage => {
   return {
     kind: 'stereo',
     correlation: correlationOf(lr, ll, rr),
-    sideToMidDb: round(ratioDb(side, mid)),
-    monoSumLossDb: round(ratioDb(mid, (ll + rr) / 2)),
+    sideToMidDb: round(powerRatioDb(side, mid)),
+    monoSumLossDb: round(powerRatioDb(mid, (ll + rr) / 2)),
     bands: features.broadBands.map((b): BandStereo => ({
       band: b.band.name,
       lowHz: b.band.lowHz,
       highHz: b.band.highHz,
       correlation: correlationOf(b.cross, b.left, b.right),
-      sideToMidDb: round(ratioDb(b.side, b.mid)),
+      sideToMidDb: round(powerRatioDb(b.side, b.mid)),
     })),
   }
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { DB_FLOOR } from '../../src/analysis/db.js'
+import { DB_CEILING, DB_FLOOR } from '../../src/analysis/db.js'
 import { analysePcm } from '../../src/analysis/features.js'
 import { buildReport, estimateCompression } from '../../src/analysis/report.js'
 import type {
@@ -126,6 +126,8 @@ describe('stereo image', () => {
     if (r.stereo.kind !== 'stereo') throw new Error('expected stereo')
     expect(r.stereo.correlation).toBe(-1)
     expect(r.stereo.monoSumLossDb).toBe(DB_FLOOR)
+    expect(r.stereo.sideToMidDb).toBe(DB_CEILING)
+    expect(codes(r)).toContain('wide-low-end')
     expect(codes(r)).toContain('negative-correlation')
     expect(codes(r)).toContain('mono-loss')
   })
