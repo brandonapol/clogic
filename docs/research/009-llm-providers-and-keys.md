@@ -51,7 +51,7 @@ Nothing has been run against a live provider or a real Keychain yet; see
 **Verdict: partial go.** A thin adapter per provider over plain `fetch` covers tool calling for all
 three providers, and needs less code than expected: there are only **two wire formats**, because xAI's
 recommended API matches OpenAI's Responses API. The Keychain adapter is written but unverified on macOS.
-The adapter approach is in [ADR 0009](../decisions/0009-llm-provider-adapters.md) (Proposed).
+The adapter approach is in [ADR 0001](../decisions/0001-llm-provider-adapters.md) (Proposed).
 
 ### Tool calling across providers
 

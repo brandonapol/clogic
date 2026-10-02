@@ -137,7 +137,7 @@ messages to the socket and back. Message shape is in the ADR draft.
 
 ### Tool layer and registry
 
-`src/llm` (t3, [ADR 0009](../decisions/0009-llm-provider-adapters.md)) already defines a provider-neutral
+`src/llm` (t3, [ADR 0001](../decisions/0001-llm-provider-adapters.md)) already defines a provider-neutral
 `ToolDefinition` = `{name, description, inputSchema}` with a strict JSON Schema object, and translates
 it for Anthropic and the OpenAI / xAI Responses API. That is a subset of the MCP tool shape (`name`,
 `title`, `description`, `inputSchema`, `outputSchema`, `annotations`; MCP spec 2025-11-25), so one

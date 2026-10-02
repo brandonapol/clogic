@@ -2,6 +2,7 @@
   "name": "clogic",
   "version": "0.0.0",
   "private": true,
+  "license": "Apache-2.0",
   "description": "AI assistant for mixing, mastering, and documentation questions in Logic Pro",
   "type": "module",
   "engines": {
