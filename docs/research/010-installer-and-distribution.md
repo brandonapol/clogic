@@ -68,7 +68,9 @@ Program membership, and the AU from SPIKE-007. Three findings change the plan:
 3. **The AU format decides the installer format.** An AUv2 `.component` must go into a
    `Plug-Ins/Components` folder, so it needs a `.pkg` (or a manual copy). An AUv3 extension ships inside
    an app and registers itself the first time that app runs, so a drag-to-Applications `.dmg` would do.
-   That choice belongs to SPIKE-007.
+   SPIKE-007 makes that choice. [SPIKE-003](./003-architecture.md) recommends AUv3 inside `clogic.app`,
+   with AUv2 as the fallback. If that holds, the default is a notarised `.dmg` plus Sparkle, and the
+   `.pkg` path below is the AUv2 fallback.
 
 ### Platform baseline (checked 2026-10-02)
 
@@ -98,7 +100,11 @@ and the size table below shows what it costs.
 `/Library/LaunchAgents` from an installer script. It also shows the agent under the app's name in
 System Settings > Login Items, where the user can switch it off. The app has to call `register()` itself,
 so the companion needs a small native app wrapper (Swift) that owns the agent. A bare Node binary
-cannot call it. Architecture belongs to SPIKE-003; this is a constraint it should know about.
+cannot call it. [SPIKE-003](./003-architecture.md) comes to the same conclusion. It recommends
+SMAppService option A, with the companion as a named, stably signed `clogic Helper.app` nested in
+`clogic.app`, so TCC prompts name it and grants survive updates. In that layout the Node binary and
+ffmpeg go in `clogic.app/Contents/Library/LoginItems/` or the helper app's own `Contents/MacOS/` (follow
+the placement table). **Mac check:** confirm `codesign --verify --strict` accepts the nested helper app.
 
 **Plugin scan.** Logic's Plug-in Manager shows a Compatibility column ("not compatible" when the scan
 finds an issue) and has a "Reset & Rescan Selection" button for plugins installed or moved in the
@@ -166,7 +172,7 @@ plug-ins inherit the entitlements of their host executable." So:
 | Code                        | Runs in                                                    | Entitlements we control                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | AUv2 component              | Logic's process (in-process)                               | None. It inherits Logic's. Library validation means Logic can only load our code if Logic has `com.apple.security.cs.disable-library-validation` ([docs](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.security.cs.disable-library-validation)). It evidently does, since it loads third-party AUs. **Mac check:** `codesign -d --entitlements - "/Applications/Logic Pro.app"` |
-| AUv3 extension              | Its own extension process (or in-process if the host asks) | Its own. App extensions are normally sandboxed. **SPIKE-007 to confirm** what the sandbox allows (network, talking to the companion)                                                                                                                                                                                                                                                                               |
+| AUv3 extension              | Its own extension process (or in-process if the host asks) | Its own. Sandboxed. SPIKE-003 found that Logic loads AUv3 out of process and proposes a UNIX socket in the app group container for talking to the companion. **SPIKE-007 to confirm**                                                                                                                                                                                                                              |
 | Companion (Node SEA or Bun) | Its own process                                            | V8 and JavaScriptCore JIT need `com.apple.security.cs.allow-jit`. Bun's [codesign guide](https://bun.com/docs/guides/runtime/codesign-macos-executable) lists five entitlements, including `disable-library-validation` and `allow-dyld-environment-variables`. Ship the minimum that works. **Mac check:** start with `allow-jit` only and add others one at a time                                               |
 | ffmpeg / ffprobe            | Child processes                                            | None needed. Hardened runtime on, no exceptions                                                                                                                                                                                                                                                                                                                                                                    |
 
