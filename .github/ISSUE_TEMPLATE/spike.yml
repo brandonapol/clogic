@@ -1,0 +1,56 @@
+name: Research spike
+description: A time-boxed investigation to answer one question.
+title: 'SPIKE-NNN: '
+labels: [spike]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: The one thing this spike must answer.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it matters
+    validations:
+      required: true
+  - type: input
+    id: timebox
+    attributes:
+      label: Timebox
+      placeholder: 1 day
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [P0, P1, P2, P3]
+    validations:
+      required: true
+  - type: textarea
+    id: investigate
+    attributes:
+      label: Investigate
+      value: |
+        - [ ]
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risks / unknowns
+  - type: input
+    id: doc
+    attributes:
+      label: Research doc
+      description: Findings are recorded in this file.
+      placeholder: docs/research/NNN-slug.md

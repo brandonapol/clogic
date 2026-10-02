@@ -1,0 +1,35 @@
+name: Bug
+description: Something does not work as expected.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      value: |
+        1.
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      placeholder: macOS 26.0, Logic Pro 11.2, clogic 0.1.0, provider Claude
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Remove API keys and personal data first.
+      render: text

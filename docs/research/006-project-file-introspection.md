@@ -1,5 +1,7 @@
 # SPIKE-006: Logic project file introspection
 
+Issue: [#6](https://github.com/brandonapol/clogic/issues/6)
+
 ## Question
 
 Can we read anything useful from a `.logicx` project bundle without opening Logic: track list, plugins

@@ -1,5 +1,7 @@
 # SPIKE-008: Scripter and MIDI FX
 
+Issue: [#8](https://github.com/brandonapol/clogic/issues/8)
+
 ## Question
 
 Is Logic's Scripter (JavaScript MIDI FX) useful for anything in this project?

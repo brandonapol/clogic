@@ -1,5 +1,7 @@
 # SPIKE-002: Logic Pro documentation Q&A
 
+Issue: [#2](https://github.com/brandonapol/clogic/issues/2)
+
 ## Question
 
 What is the best way to answer "how do I do X in Logic Pro?" with accurate, cited answers for the current

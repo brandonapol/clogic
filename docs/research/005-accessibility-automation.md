@@ -1,5 +1,7 @@
 # SPIKE-005: macOS Accessibility and key commands
 
+Issue: [#5](https://github.com/brandonapol/clogic/issues/5)
+
 ## Question
 
 What can we do through the macOS Accessibility (AX) API and Logic key commands that a control surface

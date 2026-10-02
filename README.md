@@ -11,7 +11,7 @@ Claude, OpenAI or Grok API key, and chat with it to:
 ## Status
 
 Early investigation. Logic Pro has no public scripting API, so the first phase is a set of time-boxed
-spikes to find out what is actually possible. See [docs/spikes](./docs/spikes/README.md).
+spikes to find out what is actually possible. See [docs/research](./docs/research/README.md).
 
 ## Development
 
@@ -37,6 +37,12 @@ npm run build
 ```
 src/          TypeScript source (companion service, analysis core, tools)
 test/         Vitest tests
-docs/spikes/  Investigation tickets and findings
+docs/research/  Spikes, findings and research notes
+docs/decisions/ Architecture decision records
+research/       Throwaway spike prototypes
 fixtures/     Local audio fixtures (git-ignored)
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md). AI agents follow [AGENTS.md](./AGENTS.md).

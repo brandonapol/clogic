@@ -1,5 +1,7 @@
 # SPIKE-010: Installer, ffmpeg bundling and distribution
 
+Issue: [#10](https://github.com/brandonapol/clogic/issues/10)
+
 ## Question
 
 Can we ship a single installer that puts the plugin where Logic finds it, installs the companion service

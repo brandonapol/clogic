@@ -1,5 +1,7 @@
 # SPIKE-003: Plugin, companion service and tool architecture
 
+Issue: [#3](https://github.com/brandonapol/clogic/issues/3)
+
 ## Question
 
 How do the in-Logic chat plugin, the LLM, and the tools (analysis, docs, mixer control, UI automation)

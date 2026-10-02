@@ -1,5 +1,7 @@
 # SPIKE-009: Multi-provider LLM support and API key handling
 
+Issue: [#9](https://github.com/brandonapol/clogic/issues/9)
+
 ## Question
 
 Can one agent and tool layer work across Claude, OpenAI (Codex / GPT) and Grok, with the user just

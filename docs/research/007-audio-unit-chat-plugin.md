@@ -1,5 +1,7 @@
 # SPIKE-007: Audio Unit chat plugin shell
 
+Issue: [#7](https://github.com/brandonapol/clogic/issues/7)
+
 ## Question
 
 Can we ship an Audio Unit that loads in Logic, shows a chat UI, and streams live metering to the

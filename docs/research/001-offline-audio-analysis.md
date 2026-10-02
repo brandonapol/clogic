@@ -1,5 +1,7 @@
 # SPIKE-001: Offline mix and stem analysis
 
+Issue: [#1](https://github.com/brandonapol/clogic/issues/1)
+
 ## Question
 
 Can we analyse a bounced mix and its stems from TypeScript accurately enough to give trustworthy,

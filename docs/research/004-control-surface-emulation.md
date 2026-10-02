@@ -1,5 +1,7 @@
 # SPIKE-004: Control surface emulation (Mackie Control / HUI / OSC)
 
+Issue: [#4](https://github.com/brandonapol/clogic/issues/4)
+
 ## Question
 
 Can a Node process pretend to be a control surface and reliably **read** and **write** Logic mixer state?
