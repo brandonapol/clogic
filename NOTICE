@@ -1,0 +1,8 @@
+clogic
+Copyright 2026 Brandon Apol
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product bundles FFmpeg (https://ffmpeg.org), licensed under the GNU Lesser General Public License,
+version 2.1 or later. The bundled build is LGPL-only and is run as a separate executable. Its licence text,
+configure line and corresponding source are provided with each release. See THIRD_PARTY_NOTICES.md.

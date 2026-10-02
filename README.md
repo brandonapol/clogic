@@ -46,3 +46,8 @@ fixtures/     Local audio fixtures (git-ignored)
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md). AI agents follow [AGENTS.md](./AGENTS.md).
+
+## License
+
+clogic is licensed under the [Apache License 2.0](./LICENSE). See [NOTICE](./NOTICE). Bundled ffmpeg is an
+LGPL-only build with a source offer; see [ADR 0003](./docs/decisions/0003-lgpl-only-ffmpeg-build.md).
