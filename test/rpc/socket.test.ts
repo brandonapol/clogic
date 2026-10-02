@@ -42,7 +42,7 @@ const handlers: RequestHandlers = {
     session.notify('chat.done', {
       instanceId: params.instanceId,
       turnId: 't-1',
-      stopReason: 'end_turn',
+      reason: 'end_turn',
     })
     return ok({ turnId: 't-1' })
   },

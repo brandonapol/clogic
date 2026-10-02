@@ -57,7 +57,7 @@ export const sampleCompanionNotifications: {
     text: 'Your mix is at -9 LUFS.',
   },
   'chat.delta': { instanceId, turnId: 'turn-1', messageId: 'm-1', index: 0, text: 'Your ' },
-  'chat.done': { instanceId, turnId: 'turn-1', stopReason: 'end_turn' },
+  'chat.done': { instanceId, turnId: 'turn-1', reason: 'end_turn' },
   'tool.started': {
     instanceId,
     turnId: 'turn-1',
@@ -80,13 +80,14 @@ export const sampleCompanionNotifications: {
     reason: 'Vocal is masked by the guitars',
     rows: [
       { id: 'r-1', control: 'fader', location: 'Vox', before: -3, after: -6 },
-      { id: 'r-2', control: 'pan', location: 'Gtr', before: 'unknown', after: { pan: -20 } },
+      { id: 'r-2', control: 'pan', location: 'Gtr', before: null, after: { pan: -20 } },
     ],
     expiresAt: '2026-10-02T12:05:00.000Z',
   },
   'change.applied': {
     instanceId,
     proposalId: 'p-1',
+    status: 'applied',
     applied: ['r-1'],
     declined: ['r-2'],
     failed: [],

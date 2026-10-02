@@ -1,4 +1,6 @@
-import { providerIds, type JsonObject, type JsonValue, type ProviderId } from '../llm/types.js'
+import type { ChangeOutcome, TurnEndReason } from '../agent/types.js'
+import { providerIds, type JsonObject, type ProviderId } from '../llm/types.js'
+import type { ChangeRow, FailedRow, ToolKind } from '../tools/types.js'
 import {
   array,
   boolean,
@@ -109,16 +111,11 @@ export type ChatDeltaParams = {
   readonly text: string
 }
 
-export type StopReason =
-  'end_turn' | 'max_tokens' | 'refusal' | 'step_limit' | 'cancelled' | 'error'
-
 export type ChatDoneParams = {
   readonly instanceId: string
   readonly turnId: string
-  readonly stopReason: StopReason
+  readonly reason: TurnEndReason
 }
-
-export type ToolKind = 'read' | 'change'
 
 export type ToolStartedParams = {
   readonly instanceId: string
@@ -138,14 +135,6 @@ export type ToolFinishedParams = {
   readonly summary: string
 }
 
-export type ChangeRow = {
-  readonly id: string
-  readonly control: string
-  readonly location: string
-  readonly before: JsonValue | 'unknown'
-  readonly after: JsonValue
-}
-
 export type ChangeProposedParams = {
   readonly instanceId: string
   readonly proposalId: string
@@ -154,14 +143,10 @@ export type ChangeProposedParams = {
   readonly expiresAt: string
 }
 
-export type FailedRow = {
-  readonly rowId: string
-  readonly message: string
-}
-
 export type ChangeAppliedParams = {
   readonly instanceId: string
   readonly proposalId: string
+  readonly status: ChangeOutcome['status']
   readonly applied: readonly string[]
   readonly declined: readonly string[]
   readonly failed: readonly FailedRow[]
@@ -251,6 +236,31 @@ export type CompanionNotification = {
     readonly params: CompanionNotificationSpec[M]
   }
 }[CompanionNotificationMethod]
+
+const exhaustive =
+  <T extends string>() =>
+  <const A extends readonly T[]>(
+    ...values: A & ([Exclude<T, A[number]>] extends [never] ? unknown : never)
+  ): A =>
+    values
+
+export const turnEndReasons = exhaustive<TurnEndReason>()(
+  'end_turn',
+  'tool_use',
+  'max_tokens',
+  'refusal',
+  'other',
+  'iteration_limit',
+  'llm_error',
+  'cancelled',
+)
+
+export const changeStatuses = exhaustive<ChangeOutcome['status']>()(
+  'applied',
+  'declined',
+  'expired',
+  'no_changes',
+)
 
 const provider: Decoder<ProviderId> = literal(...providerIds)
 const instanceId = nonEmptyString
@@ -344,7 +354,7 @@ export const companionNotificationDecoders: {
   'chat.done': object<ChatDoneParams>({
     instanceId,
     turnId: id,
-    stopReason: literal('end_turn', 'max_tokens', 'refusal', 'step_limit', 'cancelled', 'error'),
+    reason: literal(...turnEndReasons),
   }),
   'tool.started': object<ToolStartedParams>({
     instanceId,
@@ -372,9 +382,10 @@ export const companionNotificationDecoders: {
   'change.applied': object<ChangeAppliedParams>({
     instanceId,
     proposalId: id,
+    status: literal(...changeStatuses),
     applied: array(id),
     declined: array(id),
-    failed: array(object<FailedRow>({ rowId: id, message: string })),
+    failed: array(object<FailedRow>({ id, message: string })),
   }),
   'analysis.result': object<AnalysisResultParams>({
     instanceId,
