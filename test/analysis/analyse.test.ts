@@ -42,11 +42,32 @@ describe.skipIf(!hasFfmpeg())('analyseFile against reference signals', () => {
     expect(report.stereo).toEqual({ kind: 'mono' })
   })
 
-  it('catches an inter-sample peak 3 dB above the sample peak at fs/4 (ffmpeg reads up to 0.6 dB high)', async () => {
-    const report = await analyse('tp-fs4', 'aevalsrc=0.5*sin(2*PI*12000*t+PI/4):s=48000:d=5')
+  const truePeakCases = [
+    { case: 15, hz: 12000, amplitude: 0.5, phase: '0', expected: -6 },
+    { case: 16, hz: 12000, amplitude: 0.5, phase: 'PI/4', expected: -6 },
+    { case: 17, hz: 8000, amplitude: 0.5, phase: 'PI/3', expected: -6 },
+    { case: 18, hz: 6000, amplitude: 0.5, phase: '3*PI/8', expected: -6 },
+    { case: 19, hz: 12000, amplitude: 1.41, phase: 'PI/4', expected: 3 },
+  ] as const
+
+  it.each(truePeakCases)(
+    'EBU Tech 3341 case $case: tapered sine reads $expected dBTP within +0.2/-0.4 dB',
+    async ({ case: n, hz, amplitude, phase, expected }) => {
+      const tone = `${amplitude}*sin(2*PI*${hz}*t+${phase})`
+      const taper = 'afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01'
+      const report = await analyse(`ebu-tp${n}`, `aevalsrc=${tone}|${tone}:s=48000:d=5,${taper}`)
+      expect(report.loudness.truePeakDbtp).toBeGreaterThanOrEqual(expected - 0.4)
+      expect(report.loudness.truePeakDbtp).toBeLessThanOrEqual(expected + 0.2)
+    },
+  )
+
+  it('sees the inter-sample peak 3 dB above the sample peak in case 16', async () => {
+    const report = await analyse(
+      'tp-intersample',
+      'aevalsrc=0.5*sin(2*PI*12000*t+PI/4):s=48000:d=5,afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01',
+    )
     expect(report.dynamics.samplePeakDbfs).toBeCloseTo(-9, 0)
-    expect(report.loudness.truePeakDbtp).toBeGreaterThanOrEqual(-6.1)
-    expect(report.loudness.truePeakDbtp).toBeLessThanOrEqual(-5.3)
+    expect(report.loudness.truePeakDbtp - report.dynamics.samplePeakDbfs).toBeCloseTo(3, 0)
   })
 
   it('flags a loud, limited, phase-inverted mix', async () => {
