@@ -1,0 +1,35 @@
+var results = []
+var names = [
+  'fetch',
+  'XMLHttpRequest',
+  'WebSocket',
+  'require',
+  'process',
+  'setTimeout',
+  'setInterval',
+  'console',
+  'Date',
+  'Math',
+  'JSON',
+  'Promise',
+  'Worker',
+  'readFile',
+  'print',
+]
+function ProbeGlobals() {
+  for (var i = 0; i < names.length; i++) {
+    var present = false
+    try {
+      present = typeof eval(names[i]) !== 'undefined'
+    } catch (e) {
+      present = false
+    }
+    Trace(names[i] + ': ' + (present ? 'present' : 'absent'))
+  }
+  Trace('Event methods: ' + Object.getOwnPropertyNames(Event.prototype).join(','))
+  Trace('Event ctor keys: ' + Object.keys(this).join(','))
+}
+ProbeGlobals()
+function HandleMIDI(event) {
+  event.send()
+}
