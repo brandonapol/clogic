@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>clogic mockup: onboarding and API key entry</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="logo" viewBox="0 0 20 20">
+        <rect x="0" y="0" width="20" height="20" rx="5" fill="#4CC2FF" />
+        <path
+          d="M5 6.5v7M8.3 4.5v11M11.7 7.5v5M15 5.5v9"
+          stroke="#08131B"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          fill="none"
+        />
+      </symbol>
+      <symbol id="i-gear" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="2.2" />
+        <path
+          d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></symbol>
+      <symbol id="i-wave" viewBox="0 0 16 16">
+        <path d="M2 8h1.5M5 5v6M8 2.5v11M11 5.5v5M14 8h-1" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></symbol>
+      <symbol id="i-alert" viewBox="0 0 16 16">
+        <path d="M8 2L1.8 13h12.4L8 2zM8 6.5v3M8 11.5v.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M8 7.3v3.7M8 5v.01" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 16 16">
+        <rect x="3" y="7" width="10" height="7" rx="1.5" />
+        <path d="M5.5 7V5a2.5 2.5 0 015 0v2" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 16 16">
+        <path d="M4 1.8h5l3 3V14H4zM9 1.8V5h3M6 9.5l4 0" />
+      </symbol>
+      <symbol id="i-meter" viewBox="0 0 16 16">
+        <path d="M2.5 11a5.5 5.5 0 0111 0M8 11l2.5-3.5M2 13.5h12" />
+      </symbol>
+      <symbol id="i-paste" viewBox="0 0 16 16">
+        <rect x="3.5" y="3" width="9" height="11" rx="1.5" />
+        <path d="M6 3V2h4v1M6 7h4M6 9.5h3" />
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 16 16">
+        <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+        <circle cx="8" cy="8" r="2" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" /></symbol>
+      <symbol id="i-sliders" viewBox="0 0 16 16">
+        <path d="M4 2v12M8 2v12M12 2v12" />
+        <rect x="2.5" y="9" width="3" height="2" rx=".5" />
+        <rect x="6.5" y="4.5" width="3" height="2" rx=".5" />
+        <rect x="10.5" y="7" width="3" height="2" rx=".5" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 16 16">
+        <path
+          d="M2.5 3h4A1.5 1.5 0 018 4.5V14a1.5 1.5 0 00-1.5-1.5h-4zM13.5 3h-4A1.5 1.5 0 008 4.5V14a1.5 1.5 0 011.5-1.5h4z"
+        />
+      </symbol>
+      <symbol id="i-retry" viewBox="0 0 16 16">
+        <path d="M13 8a5 5 0 11-1.5-3.5M13 2.5v2.5h-2.5" />
+      </symbol>
+      <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4" /></symbol>
+    </svg>
+    <div class="host">
+      <div class="host-bar">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="title">Stereo Out: clogic</div>
+      </div>
+      <div class="window">
+        <main class="onboard">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <svg width="32" height="32" viewBox="0 0 20 20"><use href="#logo" /></svg>
+            <div class="steps" aria-label="Step 1 of 2"><i class="on"></i><i></i></div>
+          </div>
+          <h1>Connect an AI provider</h1>
+          <p class="lede">
+            clogic runs on your own API key. Paste it once and you are ready to chat.
+          </p>
+
+          <span class="field-label" id="provider-label">Provider</span>
+          <div class="providers" role="radiogroup" aria-labelledby="provider-label">
+            <div class="provider on" role="radio" aria-checked="true">
+              <div class="pname">Claude<span class="radio"></span></div>
+              <div class="pmodel">Anthropic</div>
+            </div>
+            <div class="provider" role="radio" aria-checked="false">
+              <div class="pname">OpenAI<span class="radio"></span></div>
+              <div class="pmodel">OpenAI</div>
+            </div>
+            <div class="provider" role="radio" aria-checked="false">
+              <div class="pname">Grok<span class="radio"></span></div>
+              <div class="pmodel">xAI</div>
+            </div>
+          </div>
+
+          <label class="field-label" for="key">Anthropic API key</label>
+          <div class="key-field" id="key">
+            <span class="val">sk-ant-••••••••••••••••••••7f3Q</span>
+            <button class="icon-btn" aria-label="Show key">
+              <svg class="icon"><use href="#i-eye" /></svg>
+            </button>
+            <button class="icon-btn" aria-label="Paste from clipboard">
+              <svg class="icon"><use href="#i-paste" /></svg>
+            </button>
+          </div>
+          <div class="hint ok">
+            <svg class="icon"><use href="#i-check" /></svg>
+            <span>Key works. Default model: Claude Sonnet 5.5</span>
+          </div>
+
+          <div class="trust">
+            <div>
+              <svg class="icon"><use href="#i-lock" /></svg>
+              <span>Stored in the macOS Keychain on this Mac.</span>
+            </div>
+            <div>
+              <svg class="icon"><use href="#i-file" /></svg>
+              <span>Never saved in your Logic project, bounces or logs.</span>
+            </div>
+            <div>
+              <svg class="icon"><use href="#i-meter" /></svg>
+              <span>Usage is billed to your provider account. clogic shows tokens per chat.</span>
+            </div>
+          </div>
+
+          <div class="bottom">
+            <button class="btn primary block">
+              Start chatting<svg class="icon"><use href="#i-arrow" /></svg>
+            </button>
+            <div class="fine">Need a key? <a href="#">Get one from your provider's console</a></div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

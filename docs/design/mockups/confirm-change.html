@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>clogic mockup: session change confirmation</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <symbol id="logo" viewBox="0 0 20 20">
+        <rect x="0" y="0" width="20" height="20" rx="5" fill="#4CC2FF" />
+        <path
+          d="M5 6.5v7M8.3 4.5v11M11.7 7.5v5M15 5.5v9"
+          stroke="#08131B"
+          stroke-width="1.8"
+          stroke-linecap="round"
+          fill="none"
+        />
+      </symbol>
+      <symbol id="i-gear" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="2.2" />
+        <path
+          d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4"
+        />
+      </symbol>
+      <symbol id="i-send" viewBox="0 0 16 16"><path d="M8 13V3M3.5 7.5L8 3l4.5 4.5" /></symbol>
+      <symbol id="i-wave" viewBox="0 0 16 16">
+        <path d="M2 8h1.5M5 5v6M8 2.5v11M11 5.5v5M14 8h-1" />
+      </symbol>
+      <symbol id="i-check" viewBox="0 0 16 16"><path d="M3.5 8.5l3 3 6-7" /></symbol>
+      <symbol id="i-alert" viewBox="0 0 16 16">
+        <path d="M8 2L1.8 13h12.4L8 2zM8 6.5v3M8 11.5v.01" />
+      </symbol>
+      <symbol id="i-info" viewBox="0 0 16 16">
+        <circle cx="8" cy="8" r="6.2" />
+        <path d="M8 7.3v3.7M8 5v.01" />
+      </symbol>
+      <symbol id="i-lock" viewBox="0 0 16 16">
+        <rect x="3" y="7" width="10" height="7" rx="1.5" />
+        <path d="M5.5 7V5a2.5 2.5 0 015 0v2" />
+      </symbol>
+      <symbol id="i-file" viewBox="0 0 16 16">
+        <path d="M4 1.8h5l3 3V14H4zM9 1.8V5h3M6 9.5l4 0" />
+      </symbol>
+      <symbol id="i-meter" viewBox="0 0 16 16">
+        <path d="M2.5 11a5.5 5.5 0 0111 0M8 11l2.5-3.5M2 13.5h12" />
+      </symbol>
+      <symbol id="i-paste" viewBox="0 0 16 16">
+        <rect x="3.5" y="3" width="9" height="11" rx="1.5" />
+        <path d="M6 3V2h4v1M6 7h4M6 9.5h3" />
+      </symbol>
+      <symbol id="i-eye" viewBox="0 0 16 16">
+        <path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z" />
+        <circle cx="8" cy="8" r="2" />
+      </symbol>
+      <symbol id="i-arrow" viewBox="0 0 16 16"><path d="M3 8h10M9.5 4.5L13 8l-3.5 3.5" /></symbol>
+      <symbol id="i-sliders" viewBox="0 0 16 16">
+        <path d="M4 2v12M8 2v12M12 2v12" />
+        <rect x="2.5" y="9" width="3" height="2" rx=".5" />
+        <rect x="6.5" y="4.5" width="3" height="2" rx=".5" />
+        <rect x="10.5" y="7" width="3" height="2" rx=".5" />
+      </symbol>
+      <symbol id="i-book" viewBox="0 0 16 16">
+        <path
+          d="M2.5 3h4A1.5 1.5 0 018 4.5V14a1.5 1.5 0 00-1.5-1.5h-4zM13.5 3h-4A1.5 1.5 0 008 4.5V14a1.5 1.5 0 011.5-1.5h4z"
+        />
+      </symbol>
+      <symbol id="i-retry" viewBox="0 0 16 16">
+        <path d="M13 8a5 5 0 11-1.5-3.5M13 2.5v2.5h-2.5" />
+      </symbol>
+      <symbol id="i-chev" viewBox="0 0 16 16"><path d="M6 4l4 4-4 4" /></symbol>
+    </svg>
+    <div class="host">
+      <div class="host-bar">
+        <div class="lights"><i></i><i></i><i></i></div>
+        <div class="title">Stereo Out: clogic</div>
+      </div>
+      <div class="window">
+        <header class="header">
+          <div class="brand">
+            <svg width="20" height="20"><use href="#logo" /></svg>clogic
+          </div>
+          <span class="chip"><span class="dot"></span>Stereo Out</span>
+          <div class="spacer"></div>
+          <div class="live-meter" title="Momentary loudness, live">
+            <div class="bars">
+              <div class="bar"><span style="width: 74%"></span></div>
+              <div class="bar"><span style="width: 71%"></span></div>
+            </div>
+            -11.4 M
+          </div>
+          <button class="icon-btn" aria-label="Settings">
+            <svg class="icon"><use href="#i-gear" /></svg>
+          </button>
+        </header>
+
+        <main class="thread">
+          <div class="day">Today 14:32</div>
+
+          <div class="msg user">
+            <p>How loud is my bounce? It's <code>mix_v3.wav</code>, aiming for Spotify.</p>
+          </div>
+
+          <div class="tool">
+            <svg class="icon sm ok"><use href="#i-check" /></svg>
+            <span class="name">analyse_loudness</span>
+            <span>mix_v3.wav</span>
+            <span class="time">2.1 s</span>
+          </div>
+
+          <section class="card" aria-label="Loudness result">
+            <div class="card-head">
+              <svg class="icon" style="color: var(--accent)"><use href="#i-meter" /></svg>
+              <span class="label">Loudness</span>
+              <span class="source">mix_v3.wav · 3:42</span>
+            </div>
+            <div class="readouts">
+              <div class="readout">
+                <div class="label">Integrated</div>
+                <div class="value">-9.8<span class="unit">LUFS</span></div>
+                <div class="delta">4.2 LU over target</div>
+              </div>
+              <div class="readout over">
+                <div class="label">True peak</div>
+                <div class="value">+0.4<span class="unit">dBTP</span></div>
+                <div class="delta">Above -1.0 ceiling</div>
+              </div>
+              <div class="readout">
+                <div class="label">Range</div>
+                <div class="value">5.2<span class="unit">LU</span></div>
+                <div class="delta">ST max -7.1</div>
+              </div>
+            </div>
+            <div class="target-row">
+              <div class="target-scale">
+                <div class="fill" style="width: 78.9%"></div>
+                <div class="mark ref" style="left: 55.6%"></div>
+                <div class="mark" style="left: 78.9%"></div>
+              </div>
+              <div class="scale-labels">
+                <span>-24</span><span>-18</span><span>-12</span><span>-6 LUFS</span>
+              </div>
+              <div class="legend">
+                <span><i></i>Your mix</span><span><i class="ref"></i>Streaming target -14</span>
+              </div>
+            </div>
+          </section>
+
+          <div class="msg assistant">
+            <p>
+              The mix is about 4 LU louder than Spotify plays back, so it will be turned down, and
+              the true peak clips. There is also a build-up around 250 Hz.
+            </p>
+            <ul>
+              <li>Pull the Stereo Out down 4 dB and set the limiter ceiling to -1.0 dBTP.</li>
+              <li>
+                Check the bass and lead vocal for low-mid overlap<span class="streaming"></span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="actions">
+            <button class="btn sm">
+              <svg class="icon sm"><use href="#i-sliders" /></svg>Apply level fix
+            </button>
+            <button class="btn sm ghost">Check masking by stem</button>
+          </div>
+        </main>
+
+        <footer class="composer">
+          <div class="box focus">
+            <button class="icon-btn" aria-label="Attach a bounce">
+              <svg class="icon"><use href="#i-wave" /></svg>
+            </button>
+            <div class="input">Ask about your mix, or how to do something in Logic</div>
+            <button class="send" aria-label="Send">
+              <svg class="icon"><use href="#i-send" /></svg>
+            </button>
+          </div>
+          <div class="foot">
+            <span>Claude Sonnet 5.5</span>
+            <span>·</span>
+            <span>3.1k tokens this chat</span>
+            <span class="spacer"></span>
+            <span><span class="kbd">Return</span> send</span>
+          </div>
+        </footer>
+        <div class="scrim">
+          <div class="dialog" role="alertdialog" aria-labelledby="dlg-title" aria-modal="true">
+            <div class="dialog-head">
+              <div class="badge">
+                <svg class="icon lg"><use href="#i-sliders" /></svg>
+              </div>
+              <div>
+                <h2 id="dlg-title">Apply 2 changes to your session?</h2>
+                <p class="sub">Suggested by clogic from the loudness check on mix_v3.wav</p>
+              </div>
+            </div>
+            <ul class="changes">
+              <li class="change">
+                <span class="check on"
+                  ><svg class="icon sm"><use href="#i-check" /></svg
+                ></span>
+                <div>
+                  <div class="what">Volume</div>
+                  <div class="where">Stereo Out · fader</div>
+                </div>
+                <div class="diff">
+                  0.0 dB<svg class="icon sm"><use href="#i-arrow" /></svg><b>-4.0 dB</b>
+                </div>
+              </li>
+              <li class="change">
+                <span class="check on"
+                  ><svg class="icon sm"><use href="#i-check" /></svg
+                ></span>
+                <div>
+                  <div class="what">Out Ceiling</div>
+                  <div class="where">Stereo Out · Adaptive Limiter</div>
+                </div>
+                <div class="diff">
+                  -0.1 dB<svg class="icon sm"><use href="#i-arrow" /></svg><b>-1.0 dB</b>
+                </div>
+              </li>
+              <li class="change off">
+                <span class="check"></span>
+                <div>
+                  <div class="what">250 Hz band gain</div>
+                  <div class="where">Bass · Channel EQ</div>
+                </div>
+                <div class="diff">
+                  0.0 dB<svg class="icon sm"><use href="#i-arrow" /></svg><b>-2.5 dB</b>
+                </div>
+              </li>
+            </ul>
+            <div class="note">
+              <svg class="icon"><use href="#i-info" /></svg>
+              <span>
+                Sent through the clogic control surface connection. Your project file and audio are
+                never edited. Previous values are kept so you can revert from the chat.
+              </span>
+            </div>
+            <div class="dialog-foot">
+              <button class="btn ghost">Cancel <span class="kbd">Esc</span></button>
+              <button class="btn caution">Apply 2 changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
