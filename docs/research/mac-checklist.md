@@ -191,24 +191,24 @@ Phases run in order. Within a phase, run checks in ID order unless a check says 
 | MAC-54 | Scripter API drift since 10.4.5                           | 008 #5                                                | G14   | 008                     |
 | MAC-55 | Failure rate of generated Scripter scripts                | 008 #6                                                | G14   | 008                     |
 
-Issue groups (one GitHub issue each, label `mac-check`):
+Issue groups (one GitHub issue each, label `mac-check`; post results on the group's issue):
 
-| Group | Title                                                  | Checks             | Spike issues             |
-| ----- | ------------------------------------------------------ | ------------------ | ------------------------ |
-| G1    | Environment and spike AUv3 loads in Logic              | MAC-01 to MAC-04   | #7, #3, #5, #6, #10, #11 |
-| G2    | Keyboard focus and window size in the AU chat window   | MAC-05, 06, 07, 16 | #7                       |
-| G3    | Plugin to companion socket and host info               | MAC-08, 17, 18     | #3, #7                   |
-| G4    | MCU round trip: ports, handshake, names, fader curve   | MAC-09 to MAC-12   | #4                       |
-| G5    | API keys in the Keychain and provider end-to-end       | MAC-13, 14         | #9, #3, #10              |
-| G6    | Loudness and decoding vs Logic                         | MAC-15, 37, 38     | #1                       |
-| G7    | Plugin behaviour: slots, null test, state, CPU, copies | MAC-19 to MAC-23   | #7                       |
-| G8    | MCU plug-in parameters, undo, background, OSC          | MAC-24 to MAC-28   | #4, #3, #5               |
-| G9    | Key commands and the Help bundle                       | MAC-29, 30, 31, 45 | #5, #2                   |
-| G10   | Accessibility tree and the export dialog               | MAC-32 to MAC-36   | #5                       |
-| G11   | Companion signing, launch agent and TCC                | MAC-40, 41, 42     | #10, #3, #5              |
-| G12   | LGPL ffmpeg and `.pkg` install / uninstall             | MAC-39, 43, 44     | #10                      |
-| G13   | `.logicx` project file checks                          | MAC-46 to MAC-50   | #6                       |
-| G14   | Scripter checks                                        | MAC-51 to MAC-55   | #8                       |
+| Group | Title                                                  | Checks             | Spike issues             | Issue                                                  |
+| ----- | ------------------------------------------------------ | ------------------ | ------------------------ | ------------------------------------------------------ |
+| G1    | Environment and spike AUv3 loads in Logic              | MAC-01 to MAC-04   | #7, #3, #5, #6, #10, #11 | [#28](https://github.com/brandonapol/clogic/issues/28) |
+| G2    | Keyboard focus and window size in the AU chat window   | MAC-05, 06, 07, 16 | #7                       | [#29](https://github.com/brandonapol/clogic/issues/29) |
+| G3    | Plugin to companion socket and host info               | MAC-08, 17, 18     | #3, #7                   | [#30](https://github.com/brandonapol/clogic/issues/30) |
+| G4    | MCU round trip: ports, handshake, names, fader curve   | MAC-09 to MAC-12   | #4                       | [#31](https://github.com/brandonapol/clogic/issues/31) |
+| G5    | API keys in the Keychain and provider end-to-end       | MAC-13, 14         | #9, #3, #10              | [#32](https://github.com/brandonapol/clogic/issues/32) |
+| G6    | Loudness and decoding vs Logic                         | MAC-15, 37, 38     | #1                       | [#33](https://github.com/brandonapol/clogic/issues/33) |
+| G7    | Plugin behaviour: slots, null test, state, CPU, copies | MAC-19 to MAC-23   | #7                       | [#34](https://github.com/brandonapol/clogic/issues/34) |
+| G8    | MCU plug-in parameters, undo, background, OSC          | MAC-24 to MAC-28   | #4, #3, #5               | [#35](https://github.com/brandonapol/clogic/issues/35) |
+| G9    | Key commands and the Help bundle                       | MAC-29, 30, 31, 45 | #5, #2                   | [#36](https://github.com/brandonapol/clogic/issues/36) |
+| G10   | Accessibility tree and the export dialog               | MAC-32 to MAC-36   | #5                       | [#37](https://github.com/brandonapol/clogic/issues/37) |
+| G11   | Companion signing, launch agent and TCC                | MAC-40, 41, 42     | #10, #3, #5              | [#38](https://github.com/brandonapol/clogic/issues/38) |
+| G12   | LGPL ffmpeg and `.pkg` install / uninstall             | MAC-39, 43, 44     | #10                      | [#39](https://github.com/brandonapol/clogic/issues/39) |
+| G13   | `.logicx` project file checks                          | MAC-46 to MAC-50   | #6                       | [#40](https://github.com/brandonapol/clogic/issues/40) |
+| G14   | Scripter checks                                        | MAC-51 to MAC-55   | #8                       | [#41](https://github.com/brandonapol/clogic/issues/41) |
 
 ## Phase 0: environment
 
@@ -424,7 +424,8 @@ At each prompt, record Logic's dB from the LCD lower row (strip 1) and from the 
   −6.0 dB; the dB step size near 0 dB; whether writes without touch were accepted; whether the fader
   snapped back (motor-fader echo). Attach the listener log.
 - **Feeds:** 004 § Writing (Faders, dB mapping) and § Mac checks for a human (6); the "set a fader to
-  −6.0 dB" demo in 004 § Demo script; ADR 0004's pending checks.
+  −6.0 dB" demo in 004 § Demo script; ADR 0004's pending checks; the calibration
+  points for `src/mcu/calibration.ts`.
 
 ### MAC-13 Provider end-to-end with keys in the Keychain
 
