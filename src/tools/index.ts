@@ -1,5 +1,7 @@
 export * from './analysis.js'
 export * from './define.js'
+export * from './mixer/index.js'
 export * from './params.js'
 export * from './registry.js'
+export * from './stems/index.js'
 export * from './types.js'
