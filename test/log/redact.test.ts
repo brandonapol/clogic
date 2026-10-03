@@ -74,8 +74,11 @@ describe('redactFields', () => {
   })
 
   it('redacts errors, their causes and custom properties', () => {
-    const cause = new Error(`upstream rejected ${xaiLike()}`)
+    const cause = Object.assign(new Error(`upstream rejected ${xaiLike()}`), {
+      stack: `Error: upstream rejected ${xaiLike()}\n    at call (/app/client.js:1:1)`,
+    })
     const error = Object.assign(new Error(`failed with ${anthropicLike()}`, { cause }), {
+      stack: `Error: failed with ${anthropicLike()}\n    at run (/app/main.js:2:2)`,
       status: 401,
       apiKey: 'short',
     })
@@ -89,7 +92,12 @@ describe('redactFields', () => {
       message: 'failed with [REDACTED]',
       status: 401,
       apiKey: '[REDACTED]',
-      cause: { name: 'Error', message: 'upstream rejected [REDACTED]' },
+      stack: 'Error: failed with [REDACTED]\n    at run (/app/main.js:2:2)',
+      cause: {
+        name: 'Error',
+        message: 'upstream rejected [REDACTED]',
+        stack: 'Error: upstream rejected [REDACTED]\n    at call (/app/client.js:1:1)',
+      },
     })
   })
 
