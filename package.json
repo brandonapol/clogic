@@ -9,6 +9,7 @@
     "node": ">=22"
   },
   "bin": {
+    "clogic-chat": "dist/cli/main.js",
     "clogic-companion": "dist/companion/main.js"
   },
   "scripts": {
