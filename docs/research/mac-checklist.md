@@ -771,7 +771,7 @@ until they pass, but they do not block Phase 1 or 2 decisions.
 ### MAC-39 LGPL ffmpeg build on arm64
 
 ```sh
-WORK=~/clogic-mac-checks/ffmpeg research/010-installer-and-distribution/build-lgpl-ffmpeg.sh
+WORK=~/clogic-mac-checks/ffmpeg packaging/ffmpeg/build-lgpl-ffmpeg.sh
 ```
 
 - **Expected:** `ffmpeg -L` reports LGPL; about 5 MB, similar to the Linux build.

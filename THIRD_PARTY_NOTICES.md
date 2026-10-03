@@ -15,7 +15,7 @@ component, its version, or its build configuration changes.
 
 - Component: FFmpeg (`ffmpeg` and `ffprobe` executables), <https://ffmpeg.org>
 - Version: pinned release, currently 9.0.2 in the
-  [SPIKE-010 build script](./research/010-installer-and-distribution/build-lgpl-ffmpeg.sh)
+  [packaging build script](./packaging/ffmpeg/build-lgpl-ffmpeg.sh)
 - Licence: GNU Lesser General Public License, version 2.1 or (at your option) any later version
   (LGPL-2.1-or-later)
 - Build: built by the clogic project from the official release tarball, LGPL-only. No `--enable-gpl`,
