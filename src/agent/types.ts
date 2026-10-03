@@ -9,18 +9,19 @@ import type {
   ToolCall,
   ToolDefinition,
   ToolResult,
-  Usage,
 } from '../llm/types.js'
+import type {
+  BudgetState,
+  CostEstimate,
+  PriceTable,
+  TokenUsage,
+  UsageLedger,
+} from '../usage/types.js'
 import type { ApplyReport, ChangeRow, ToolError, ToolKind } from '../tools/types.js'
 
 export type AgentTool = {
   readonly definition: ToolDefinition
   readonly kind: ToolKind
-}
-
-export type Pricing = {
-  readonly inputUsdPerMillion: number
-  readonly outputUsdPerMillion: number
 }
 
 export type AgentConfig = {
@@ -30,14 +31,7 @@ export type AgentConfig = {
   readonly maxIterations: number
   readonly proposalTtlMs: number
   readonly tools: readonly AgentTool[]
-  readonly pricing: Pricing | null
-}
-
-export type UsageTotals = {
-  readonly llmCalls: number
-  readonly inputTokens: number
-  readonly outputTokens: number
-  readonly costUsd: number | null
+  readonly prices: PriceTable
 }
 
 export type Proposal = {
@@ -71,7 +65,8 @@ export type AgentState = {
   readonly phase: Phase
   readonly iterations: number
   readonly nextRequestId: number
-  readonly usage: UsageTotals
+  readonly usage: UsageLedger
+  readonly budget: BudgetState | null
 }
 
 export type AgentLlmError = LlmError | { readonly kind: 'exception'; readonly message: string }
@@ -103,7 +98,10 @@ export type AgentEvent =
   | { readonly type: 'change_applied'; readonly proposalId: string; readonly report: ApplyReport }
   | { readonly type: 'cancel' }
 
-export type TurnEndReason = StopReason | 'iteration_limit' | 'llm_error' | 'cancelled'
+export type TurnEndReason =
+  StopReason | 'iteration_limit' | 'llm_error' | 'cancelled' | 'budget_exceeded'
+
+export type BudgetAlertLevel = 'warn' | 'block'
 
 export type ChangeOutcome = {
   readonly status: 'applied' | 'declined' | 'expired' | 'no_changes'
@@ -127,7 +125,13 @@ export type AgentNotification =
       readonly proposalId: string
       readonly outcome: ChangeOutcome
     }
-  | { readonly type: 'usage'; readonly call: Usage; readonly total: UsageTotals }
+  | {
+      readonly type: 'usage'
+      readonly call: TokenUsage
+      readonly estimate: CostEstimate
+      readonly total: UsageLedger
+    }
+  | { readonly type: 'budget'; readonly level: BudgetAlertLevel; readonly message: string }
   | { readonly type: 'turn_ended'; readonly reason: TurnEndReason }
   | { readonly type: 'error'; readonly error: AgentError }
 

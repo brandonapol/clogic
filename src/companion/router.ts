@@ -1,10 +1,12 @@
 import { initialState, step } from '../agent/step.js'
-import type { AgentConfig, AgentEvent, Step } from '../agent/types.js'
+import type { AgentConfig, AgentEvent, AgentState, Step } from '../agent/types.js'
 import { providerNames } from '../llm/errors.js'
 import { err, ok } from '../llm/result.js'
 import type { ProviderId } from '../llm/types.js'
 import { rpcError, rpcErrorCodes, type RpcErrorObject } from '../rpc/jsonrpc.js'
 import type { CompanionNotification, SessionHelloParams } from '../rpc/messages.js'
+import { rollMonth } from '../usage/budget.js'
+import type { BudgetState } from '../usage/types.js'
 import { mapNotification } from './notifications.js'
 import {
   companionErrorCodes,
@@ -36,13 +38,30 @@ const agentConfig = (settings: CompanionSettings, provider: ProviderId | null): 
   maxIterations: settings.maxIterations,
   proposalTtlMs: settings.proposalTtlMs,
   tools: settings.tools,
-  pricing: null,
+  prices: settings.prices,
 })
 
 export const initialCompanionState = (
   settings: CompanionSettings,
   activeProvider: ProviderId | null = null,
-): CompanionState => ({ settings, activeProvider, conversations: {} })
+  budget: BudgetState | null = null,
+): CompanionState => ({ settings, activeProvider, budget, conversations: {} })
+
+export const rollBudgetMonth = (state: CompanionState, month: string): CompanionState =>
+  state.budget === null || state.budget.month === month
+    ? state
+    : { ...state, budget: rollMonth(state.budget, month) }
+
+const agentOf = (state: CompanionState, conversation: Conversation): AgentState =>
+  conversation.agent.budget === state.budget
+    ? conversation.agent
+    : { ...conversation.agent, budget: state.budget }
+
+const stepConversation = (
+  state: CompanionState,
+  conversation: Conversation,
+  event: AgentEvent,
+): Step => step(agentOf(state, conversation), event)
 
 const newConversation = (state: CompanionState, instanceId: string): Conversation => ({
   instanceId,
@@ -144,9 +163,10 @@ const advance = (
       ? next.effects.find((effect) => effect.type === 'call_llm')
       : undefined
   const updated: Conversation = { ...conversation, agent: next.state, turn: mapped.turn }
+  const budgeted: CompanionState = { ...state, budget: next.state.budget }
   if (missingProvider?.type === 'call_llm')
     return advance(
-      withConversation(state, updated),
+      withConversation(budgeted, updated),
       updated,
       step(next.state, {
         type: 'llm_response',
@@ -155,7 +175,7 @@ const advance = (
       }),
       mapped.effects,
     )
-  return { state: withConversation(state, updated), effects: mapped.effects }
+  return { state: withConversation(budgeted, updated), effects: mapped.effects }
 }
 
 const failure = (code: number, message: string): RpcErrorObject => rpcError(code, message)
@@ -212,7 +232,7 @@ const onChatSend = (
   const routed = advance(
     state,
     started,
-    step(conversation.agent, { type: 'user_message', text: request.params.text }),
+    stepConversation(state, conversation, { type: 'user_message', text: request.params.text }),
     superseded,
   )
   return { ...routed, reply: ok({ turnId: turn.id }) }
@@ -230,7 +250,11 @@ const onChatCancel = (
     (turnId !== null && turnId !== conversation.turn.id)
   )
     return { state, effects: [], reply: ok({ cancelled: false }) }
-  const routed = advance(state, conversation, step(conversation.agent, { type: 'cancel' }))
+  const routed = advance(
+    state,
+    conversation,
+    stepConversation(state, conversation, { type: 'cancel' }),
+  )
   const after = routed.state.conversations[conversation.instanceId]
   return { ...routed, reply: ok({ cancelled: after?.agent.phase.kind === 'idle' }) }
 }
@@ -243,13 +267,14 @@ const onChangeDecide = (
   const conversation = state.conversations[instanceId]
   const unknown = failure(companionErrorCodes.unknownProposal, `No pending proposal ${proposalId}`)
   if (conversation === undefined) return rejected(state, unknown)
-  const next = step(conversation.agent, {
+  const agent = agentOf(state, conversation)
+  const next = step(agent, {
     type: 'change_decision',
     proposalId,
     acceptedRowIds,
     at: request.at,
   })
-  if (next.state === conversation.agent) return rejected(state, unknown)
+  if (next.state === agent) return rejected(state, unknown)
   const routed = advance(state, conversation, next)
   const applying = next.effects.some((effect) => effect.type === 'apply_change')
   return { ...routed, reply: ok({ proposalId, outcome: applying ? 'applying' : 'declined' }) }
@@ -329,5 +354,5 @@ export const handleAgentEvent = (
 ): Routed => {
   const conversation = state.conversations[instanceId]
   if (conversation === undefined) return { state, effects: [] }
-  return advance(state, conversation, step(conversation.agent, event))
+  return advance(state, conversation, stepConversation(state, conversation, event))
 }

@@ -12,6 +12,8 @@ import type {
   ResultOf,
 } from '../rpc/messages.js'
 import type { ChangeRow } from '../tools/types.js'
+import type { BudgetLimitsInput } from '../usage/budget.js'
+import type { BudgetState, PriceTable } from '../usage/types.js'
 
 export type CompanionSettings = {
   readonly system: (provider: ProviderId) => string
@@ -20,6 +22,8 @@ export type CompanionSettings = {
   readonly proposalTtlMs: number
   readonly models: Readonly<Record<ProviderId, string>>
   readonly tools: readonly AgentTool[]
+  readonly prices: PriceTable
+  readonly budget: BudgetLimitsInput
 }
 
 export type Turn = {
@@ -37,6 +41,7 @@ export type Conversation = {
 export type CompanionState = {
   readonly settings: CompanionSettings
   readonly activeProvider: ProviderId | null
+  readonly budget: BudgetState | null
   readonly conversations: Readonly<Record<string, Conversation>>
 }
 

@@ -2,6 +2,7 @@ import type { AgentError, AgentNotification, AgentState } from '../agent/types.j
 import { describeError } from '../llm/errors.js'
 import type { ToolCall } from '../llm/types.js'
 import type { CompanionNotification } from '../rpc/messages.js'
+import { promptTokens } from '../usage/estimate.js'
 import type { Turn } from './types.js'
 
 export type Mapped = {
@@ -10,6 +11,11 @@ export type Mapped = {
 }
 
 export const maxSummaryLength = 200
+
+export const budgetErrorCodes = {
+  warn: 'budget_warning',
+  block: 'budget_exceeded',
+} as const
 
 export const summarize = (content: string): string =>
   content.length > maxSummaryLength ? `${content.slice(0, maxSummaryLength - 1)}…` : content
@@ -62,6 +68,22 @@ export const mapNotification = (
             kind: 'notification',
             method: 'error',
             params: { instanceId, turnId, ...describeAgentError(notification.error) },
+          },
+        ],
+      }
+    case 'budget':
+      return {
+        turn,
+        notifications: [
+          {
+            kind: 'notification',
+            method: 'error',
+            params: {
+              instanceId,
+              turnId,
+              code: budgetErrorCodes[notification.level],
+              message: notification.message,
+            },
           },
         ],
       }
@@ -168,7 +190,7 @@ export const mapNotification = (
             params: {
               instanceId,
               turnId: turn.id,
-              inputTokens: notification.call.inputTokens,
+              inputTokens: promptTokens(notification.call),
               outputTokens: notification.call.outputTokens,
             },
           },

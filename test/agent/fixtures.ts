@@ -2,6 +2,7 @@ import type { AgentDeps } from '../../src/agent/run.js'
 import type { AgentConfig, AgentNotification } from '../../src/agent/types.js'
 import { ok } from '../../src/llm/result.js'
 import type { ChatRequest, ChatResponse, StopReason, ToolCall } from '../../src/llm/types.js'
+import { defaultPriceTable } from '../../src/usage/prices.js'
 import { analysisTools, type AnalysisDeps } from '../../src/tools/analysis.js'
 import { defineChangeTool } from '../../src/tools/define.js'
 import { numberParam, stringParam } from '../../src/tools/params.js'
@@ -22,7 +23,7 @@ export const response = (
   text,
   toolCalls,
   stopReason,
-  usage: { inputTokens: 1000, outputTokens: 100 },
+  usage: { inputTokens: 1000, cachedInputTokens: 0, outputTokens: 100 },
   replay: { provider: 'anthropic', items: [] },
 })
 
@@ -84,7 +85,7 @@ export const configFor = (
   maxIterations: 5,
   proposalTtlMs: 60_000,
   tools: registry.tools.map((tool) => ({ definition: tool.definition, kind: tool.kind })),
-  pricing: { inputUsdPerMillion: 3, outputUsdPerMillion: 15 },
+  prices: defaultPriceTable,
   ...overrides,
 })
 

@@ -151,17 +151,31 @@ describe('agent step', () => {
     expect(workTypes(next.effects)).toEqual([])
   })
 
-  it('leaves cost null when no pricing is configured', () => {
+  it('counts a call to an unpriced model without guessing its cost', () => {
     const h = harness([])
-    const { state } = run(initialState(configFor(h.registry, { pricing: null })), [
-      { type: 'user_message', text: 'Hi' },
-      { type: 'llm_response', requestId: 1, result: ok(response('Hello')) },
-    ])
+    const { state, effects } = run(
+      initialState(configFor(h.registry, { model: 'claude-unreleased-9' })),
+      [
+        { type: 'user_message', text: 'Hi' },
+        { type: 'llm_response', requestId: 1, result: ok(response('Hello')) },
+      ],
+    )
     expect(state.usage).toEqual({
-      llmCalls: 1,
+      calls: 1,
       inputTokens: 1000,
+      cachedInputTokens: 0,
       outputTokens: 100,
-      costUsd: null,
+      pricedUsd: 0,
+      unpricedCalls: 1,
+      unpricedModels: [{ provider: 'anthropic', model: 'claude-unreleased-9' }],
+    })
+    const usage = effects.find(
+      (effect) => effect.type === 'notify' && effect.notification.type === 'usage',
+    )
+    expect(usage).toMatchObject({
+      notification: {
+        estimate: { kind: 'unknown_model', provider: 'anthropic', model: 'claude-unreleased-9' },
+      },
     })
   })
 })

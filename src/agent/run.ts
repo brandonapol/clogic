@@ -2,6 +2,7 @@ import { err, type Result } from '../llm/result.js'
 import type { ChatRequest, ChatResponse } from '../llm/types.js'
 import type { ToolExecutor } from '../tools/registry.js'
 import type { ToolError } from '../tools/types.js'
+import { monthKey } from '../usage/budget.js'
 import { step } from './step.js'
 import type {
   AgentEffect,
@@ -10,6 +11,7 @@ import type {
   AgentNotification,
   AgentState,
 } from './types.js'
+import { withBudgetMonth } from './usage.js'
 
 export type AgentDeps = {
   readonly chat: (request: ChatRequest) => Promise<Result<ChatResponse, AgentLlmError>>
@@ -78,7 +80,7 @@ export const drive = async (
   state: AgentState,
   event: AgentEvent,
 ): Promise<AgentState> => {
-  const next = step(state, event)
+  const next = step(withBudgetMonth(state, monthKey(deps.now())), event)
   next.effects.forEach((effect) => {
     if (effect.type === 'notify') deps.notify(effect.notification)
   })

@@ -35,6 +35,13 @@ export type ProtocolProblem =
   | { readonly kind: 'decode'; readonly failure: DecodeFailure }
   | { readonly kind: 'frame'; readonly event: Exclude<FrameEvent, { kind: 'line' }> }
 
+export type RequestReport = {
+  readonly method: RequestMethod
+  readonly ok: boolean
+  readonly code: number | null
+  readonly durationMs: number
+}
+
 export type ServerSession = {
   readonly hello: () => SessionHelloParams | null
   readonly notify: <M extends CompanionNotificationMethod>(
@@ -61,6 +68,7 @@ export type ServerOptions = {
   readonly onHello?: (hello: SessionHelloParams, session: ServerSession) => void
   readonly onNotification?: (notification: PluginNotification, session: ServerSession) => void
   readonly onProblem?: (problem: ProtocolProblem) => void
+  readonly onRequest?: (report: RequestReport) => void
 }
 
 export type RpcServer = {
@@ -114,16 +122,22 @@ const shouldReply = (failure: DecodeFailure): boolean =>
   failure.error.code === rpcErrorCodes.parseError ||
   failure.error.code === rpcErrorCodes.invalidRequest
 
+type Dispatched = {
+  readonly line: string
+  readonly error: RpcErrorObject | null
+}
+
 const dispatch = async <M extends HandledMethod>(
   request: RequestOf<M>,
   handlers: RequestHandlers,
   session: ServerSession,
-): Promise<string> =>
-  encodeResponse(
-    request.id,
-    request.method,
-    await handlers[request.method](request.params, session),
-  )
+): Promise<Dispatched> => {
+  const outcome = await handlers[request.method](request.params, session)
+  return {
+    line: encodeResponse(request.id, request.method, outcome),
+    error: outcome.ok ? null : outcome.error,
+  }
+}
 
 const serveConnection = (socket: Socket, options: ServerOptions): void => {
   let state: SessionState = initialSession
@@ -135,11 +149,23 @@ const serveConnection = (socket: Socket, options: ServerOptions): void => {
   }
 
   const handleRequest = (request: PluginRequest): void => {
+    const started = performance.now()
+    const reportRequest = (error: RpcErrorObject | null) =>
+      options.onRequest?.({
+        method: request.method,
+        ok: error === null,
+        code: error?.code ?? null,
+        durationMs: Math.round(performance.now() - started),
+      })
     const admitted = admit(state, request.method)
-    if (!admitted.ok) return writeLine(socket, encodeError(request.id, admitted.error))
+    if (!admitted.ok) {
+      reportRequest(admitted.error)
+      return writeLine(socket, encodeError(request.id, admitted.error))
+    }
     if (request.method === 'session.hello') {
       const accepted = acceptHello(request.params, options.companion)
       writeLine(socket, encodeResponse(request.id, request.method, accepted))
+      reportRequest(accepted.ok ? null : accepted.error)
       if (accepted.ok) {
         state = { phase: 'ready', hello: request.params }
         options.onHello?.(request.params, session)
@@ -147,12 +173,15 @@ const serveConnection = (socket: Socket, options: ServerOptions): void => {
       return
     }
     dispatch(request, options.handlers, session).then(
-      (line) => writeLine(socket, line),
-      () =>
-        writeLine(
-          socket,
-          encodeError(request.id, rpcError(rpcErrorCodes.internalError, 'Internal error')),
-        ),
+      (dispatched) => {
+        writeLine(socket, dispatched.line)
+        reportRequest(dispatched.error)
+      },
+      () => {
+        const error = rpcError(rpcErrorCodes.internalError, 'Internal error')
+        writeLine(socket, encodeError(request.id, error))
+        reportRequest(error)
+      },
     )
   }
 

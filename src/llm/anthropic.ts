@@ -119,6 +119,7 @@ export const parseAnthropicResponse = (body: unknown): Result<ChatResponse, stri
     stopReason: stopReasons[stringField(body, 'stop_reason') ?? ''] ?? 'other',
     usage: {
       inputTokens: numberField(usage, 'input_tokens'),
+      cachedInputTokens: numberField(usage, 'cache_read_input_tokens'),
       outputTokens: numberField(usage, 'output_tokens'),
     },
     replay: { provider: 'anthropic', items: content.filter(isJsonObject) },

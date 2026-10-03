@@ -41,8 +41,8 @@ describe('agent loop', () => {
     ])
     expect(JSON.parse(results[0]?.content ?? '')).toMatchObject({ integratedLufs: -9.8 })
     expect(h.notifications.at(-1)).toEqual({ type: 'turn_ended', reason: 'end_turn' })
-    expect(state.usage).toMatchObject({ llmCalls: 3, inputTokens: 3000, outputTokens: 300 })
-    expect(state.usage.costUsd).toBeCloseTo(0.0135, 10)
+    expect(state.usage).toMatchObject({ calls: 3, inputTokens: 3000, outputTokens: 300 })
+    expect(state.usage.pricedUsd).toBeCloseTo(0.009, 10)
   })
 
   it('runs every tool call in one response in order', async () => {

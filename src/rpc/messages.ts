@@ -12,6 +12,7 @@ import {
   nonNegativeInteger,
   nullable,
   object,
+  optional,
   string,
   type Decoder,
 } from './decode.js'
@@ -83,6 +84,16 @@ export type ProviderSelectParams = {
 
 export type ProviderSelectResult = {
   readonly activeProvider: ProviderId
+}
+
+export type DiagnosticsExportParams = {
+  readonly includeContent?: boolean
+}
+
+export type DiagnosticsExportResult = {
+  readonly includesContent: boolean
+  readonly json: string
+  readonly text: string
 }
 
 export type MeterParams = {
@@ -183,6 +194,10 @@ export type RequestSpec = {
   readonly 'keys.set': { params: KeysSetParams; result: KeysSetResult }
   readonly 'keys.status': { params: KeysStatusParams; result: KeysStatusResult }
   readonly 'provider.select': { params: ProviderSelectParams; result: ProviderSelectResult }
+  readonly 'diagnostics.export': {
+    params: DiagnosticsExportParams
+    result: DiagnosticsExportResult
+  }
 }
 
 export type PluginNotificationSpec = {
@@ -253,6 +268,7 @@ export const turnEndReasons = exhaustive<TurnEndReason>()(
   'iteration_limit',
   'llm_error',
   'cancelled',
+  'budget_exceeded',
 )
 
 export const changeStatuses = exhaustive<ChangeOutcome['status']>()(
@@ -321,6 +337,14 @@ export const requestDecoders: {
   'provider.select': {
     params: object<ProviderSelectParams>({ provider }),
     result: object<ProviderSelectResult>({ activeProvider: provider }),
+  },
+  'diagnostics.export': {
+    params: object<DiagnosticsExportParams>({ includeContent: optional(boolean) }),
+    result: object<DiagnosticsExportResult>({
+      includesContent: boolean,
+      json: string,
+      text: string,
+    }),
   },
 }
 

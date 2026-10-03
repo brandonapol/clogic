@@ -52,6 +52,11 @@ export const nullable =
   (value, path) =>
     value === null ? ok(null) : decoder(value, path)
 
+export const optional =
+  <T>(decoder: Decoder<T>): Decoder<T | undefined> =>
+  (value, path) =>
+    value === undefined ? ok(undefined) : decoder(value, path)
+
 export const array =
   <T>(decoder: Decoder<T>): Decoder<readonly T[]> =>
   (value, path) => {
@@ -73,7 +78,8 @@ export const object =
       (acc, [key, decoder]) => {
         if (!acc.ok) return acc
         const field = decoder(value[key], `${path}.${key}`)
-        return field.ok ? ok({ ...acc.value, [key]: field.value }) : field
+        if (!field.ok) return field
+        return field.value === undefined ? acc : ok({ ...acc.value, [key]: field.value })
       },
       ok({}),
     )

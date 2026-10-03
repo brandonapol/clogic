@@ -120,7 +120,25 @@ describe('anthropic response parsing', () => {
       text: 'Measuring now.',
       toolCalls: [{ id: 'toolu_01', name: 'get_loudness', input: { path: '/tmp/mix.wav' } }],
       stopReason: 'tool_use',
-      usage: { inputTokens: 412, outputTokens: 57 },
+      usage: { inputTokens: 412, cachedInputTokens: 0, outputTokens: 57 },
+    })
+  })
+
+  it('reports cache reads separately from uncached input tokens', () => {
+    const parsed = parseAnthropicResponse({
+      content: [{ type: 'text', text: 'Hi' }],
+      stop_reason: 'end_turn',
+      usage: {
+        input_tokens: 120,
+        cache_read_input_tokens: 3000,
+        cache_creation_input_tokens: 0,
+        output_tokens: 9,
+      },
+    })
+    expect(parsed.ok && parsed.value.usage).toEqual({
+      inputTokens: 120,
+      cachedInputTokens: 3000,
+      outputTokens: 9,
     })
   })
 
