@@ -124,8 +124,38 @@ describe('responses response parsing', () => {
       text: '',
       toolCalls: [{ id: 'call_01', name: 'get_loudness', input: { path: '/tmp/mix.wav' } }],
       stopReason: 'tool_use',
-      usage: { inputTokens: 300, outputTokens: 40 },
+      usage: { inputTokens: 300, cachedInputTokens: 0, outputTokens: 40 },
       replay: { provider: 'xai' },
+    })
+  })
+
+  it('subtracts cached tokens from input_tokens', () => {
+    const parsed = parseResponsesResponse('openai', {
+      status: 'completed',
+      output: [],
+      usage: {
+        input_tokens: 5000,
+        input_tokens_details: { cached_tokens: 4096 },
+        output_tokens: 12,
+      },
+    })
+    expect(parsed.ok && parsed.value.usage).toEqual({
+      inputTokens: 904,
+      cachedInputTokens: 4096,
+      outputTokens: 12,
+    })
+  })
+
+  it('never reports more cached tokens than input tokens', () => {
+    const parsed = parseResponsesResponse('xai', {
+      status: 'completed',
+      output: [],
+      usage: { input_tokens: 10, input_tokens_details: { cached_tokens: 50 }, output_tokens: 1 },
+    })
+    expect(parsed.ok && parsed.value.usage).toEqual({
+      inputTokens: 0,
+      cachedInputTokens: 10,
+      outputTokens: 1,
     })
   })
 

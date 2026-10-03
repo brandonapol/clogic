@@ -22,7 +22,7 @@ export const response = (
   text,
   toolCalls,
   stopReason,
-  usage: { inputTokens: 1000, outputTokens: 100 },
+  usage: { inputTokens: 1000, cachedInputTokens: 0, outputTokens: 100 },
   replay: { provider: 'anthropic', items: [] },
 })
 

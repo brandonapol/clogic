@@ -11,6 +11,7 @@ import type {
   StopReason,
   ToolCall,
   ToolDefinition,
+  Usage,
 } from './types.js'
 
 export type ResponsesDialect = {
@@ -124,6 +125,18 @@ const stopReasonOf = (
   return stringField(body, 'status') === 'completed' ? 'end_turn' : 'other'
 }
 
+const usageOf = (body: Readonly<Record<string, unknown>>): Usage => {
+  const usage = isRecord(body['usage']) ? body['usage'] : {}
+  const details = isRecord(usage['input_tokens_details']) ? usage['input_tokens_details'] : {}
+  const input = Math.max(0, numberField(usage, 'input_tokens'))
+  const cached = Math.min(input, Math.max(0, numberField(details, 'cached_tokens')))
+  return {
+    inputTokens: input - cached,
+    cachedInputTokens: cached,
+    outputTokens: numberField(usage, 'output_tokens'),
+  }
+}
+
 export const parseResponsesResponse = (
   provider: ProviderId,
   body: unknown,
@@ -145,15 +158,11 @@ export const parseResponsesResponse = (
   const failed = calls.find((call) => !call.ok)
   if (failed !== undefined && !failed.ok) return err(failed.error)
   const toolCalls = calls.flatMap((call) => (call.ok ? [call.value] : []))
-  const usage = isRecord(body['usage']) ? body['usage'] : {}
   return ok({
     text,
     toolCalls,
     stopReason: stopReasonOf(body, toolCalls.length > 0, refusals.length > 0),
-    usage: {
-      inputTokens: numberField(usage, 'input_tokens'),
-      outputTokens: numberField(usage, 'output_tokens'),
-    },
+    usage: usageOf(body),
     replay: { provider, items: output.filter(isJsonObject) },
   })
 }

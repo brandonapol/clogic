@@ -64,6 +64,7 @@ export type StopReason = 'end_turn' | 'tool_use' | 'max_tokens' | 'refusal' | 'o
 
 export type Usage = {
   readonly inputTokens: number
+  readonly cachedInputTokens: number
   readonly outputTokens: number
 }
 
