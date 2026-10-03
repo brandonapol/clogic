@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { execFile, type ExecFileException } from 'node:child_process'
 import { normalizeApiKey, type KeyStore, type KeyStoreError } from './keystore.js'
 import { redactSecrets } from './redact.js'
