@@ -184,7 +184,7 @@ Response:
 
 ## Requests (plugin → companion)
 
-All seven methods are in `requestDecoders` (`messages.ts`). A request is answered with exactly one
+All eight methods are in `requestDecoders` (`messages.ts`). A request is answered with exactly one
 response, a `result` or an `error` (see [Error codes](#error-codes)). The companion also validates
 the `result` shape on its own test client (`decodeResult`); a plugin should be equally strict.
 
@@ -341,6 +341,52 @@ counts as not configured.
 Error `1001` if no key is saved for that provider. Selecting a provider switches the model for all
 existing conversations.
 
+### `diagnostics.export`
+
+Return a redacted diagnostics bundle built from the companion's in-memory ring of recent log records
+(`src/log/diagnostics.ts`, handler in `src/companion/service.ts`). Like `keys.*` it has no
+`instanceId` and is global to the companion, but it still needs a successful hello first.
+
+```json
+{ "jsonrpc": "2.0", "id": 8, "method": "diagnostics.export", "params": { "includeContent": false } }
+```
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 8,
+  "result": {
+    "includesContent": false,
+    "json": "{\n  \"format\": \"clogic-diagnostics\",\n  \"formatVersion\": 1\n}\n",
+    "text": "clogic diagnostics\nGenerated: 2026-01-01T00:00:00.000Z\n"
+  }
+}
+```
+
+(The `json` and `text` values above are shortened. Real ones contain the full report.)
+
+| Param            | Type    | Notes                                                                    |
+| ---------------- | ------- | ------------------------------------------------------------------------ |
+| `includeContent` | boolean | Optional, default `false`. May be omitted. `null` is rejected (`-32602`) |
+
+| Result            | Type    | Notes                                                                                   |
+| ----------------- | ------- | --------------------------------------------------------------------------------------- |
+| `includesContent` | boolean | Whether message content was kept. `true` only if the request had `includeContent: true` |
+| `json`            | string  | The report as pretty-printed JSON (2-space indent) with a trailing LF                   |
+| `text`            | string  | The same report as human-readable text, for pasting into a bug report                   |
+
+- `json` is a serialised string, not a nested object. It decodes to `{ format:
+"clogic-diagnostics", formatVersion: 1, generatedAt, includesContent, versions, os, records }`,
+  where each record is `{ time, level, event, context, fields }`. Its own `formatVersion` is separate
+  from `protocolVersion`.
+- With `includeContent: false`, fields whose key is one of `completion`, `content`, `contents`,
+  `messages`, `prompt`, `prompts`, `reply`, `system`, `text`, `transcript` (any case) are replaced
+  with `[CONTENT OMITTED]` unless the value is `null`. Known API keys are redacted and audio file
+  paths are reduced to base names in both modes.
+- The plugin should treat the bundle as something the user chooses to share. It must ask before
+  sending `includeContent: true`, and must not upload either string anywhere on its own.
+- No error code is specific to this method; a handler failure is `-32603`.
+
 ## Notifications, plugin → companion
 
 Notifications have no `id` and get no reply. They are accepted only after a successful hello.
@@ -458,7 +504,10 @@ Ends a turn. Exactly one per `turnId` that was started by a successful `chat.sen
 
 `reason` is one of (`turnEndReasons`): `end_turn`, `tool_use`, `max_tokens`, `refusal`, `other` (the
 LLM's stop reason), `iteration_limit` (the agent hit its per-turn LLM call limit, default 8),
-`llm_error` (the LLM call failed, preceded by an `error` notification), `cancelled`.
+`llm_error` (the LLM call failed, preceded by an `error` notification), `cancelled`,
+`budget_exceeded` (a usage budget limit was already reached when the agent was about to make an LLM
+call, so the call was not made; preceded by an `error` notification with code `budget_exceeded`, see
+[`error`](#error)).
 
 A plugin must tolerate unknown `reason` strings by treating them as `other`; the companion's decoder
 will not produce them in version 1, but a future version bump may add some.
@@ -626,6 +675,10 @@ Per LLM call, after that call's assistant message.
 
 Both counts are non-negative integers for one call (not cumulative). Cost is not sent.
 
+`inputTokens` is the **full prompt size** for the call: uncached plus cached input tokens
+(`promptTokens` in `src/usage/estimate.ts`). It is not the uncached portion alone, and the cached
+count is not sent separately. `outputTokens` is the call's output count.
+
 ### `error`
 
 A problem that is not the response to a request.
@@ -652,9 +705,29 @@ response error codes). The values the companion produces today (`describeAgentEr
 | `llm_exception`                                                                                                                                 | Local failure around the LLM call, including `No LLM provider is selected` and an unreadable Keychain key         |
 | `busy`                                                                                                                                          | A message or cancel arrived at a bad time inside the agent (for example `chat.cancel` while a change is applying) |
 | `unknown_proposal`                                                                                                                              | `change.decide` for a proposal that is not pending (also returned as error `1003`)                                |
+| `budget_warning`                                                                                                                                | A usage budget crossed its warning fraction (default 80%) on this call. The turn continues                        |
+| `budget_exceeded`                                                                                                                               | A usage budget limit was reached (see below)                                                                      |
 
 Treat an unknown `code` as a generic error and show `message`. Messages are written for display, not for parsing. Local exception messages are passed through
 `redactSecrets` with the user's key before they are sent.
+
+**Budget codes.** The companion tracks estimated spend against a session limit and a monthly limit
+(defaults 5 and 50 US dollars, warning at 80%; set with `CLOGIC_BUDGET_SESSION_USD` and
+`CLOGIC_BUDGET_MONTHLY_USD`, where `off`, `none` or `unlimited` disables a limit; see
+`src/companion/config.ts`). Both codes carry `instanceId`, the current `turnId` (or `null`) and a
+human-readable `message`, for example:
+
+- `budget_warning`: `Session budget 80% used ($4.10 of $5.00)`. Several affected periods are joined
+  with `. `. Sent after the `usage` for the call that crossed the threshold.
+- `budget_exceeded`: `Session budget reached ($5.02 of $5.00). Raise or remove the limit to keep
+chatting.`
+
+`budget_exceeded` is sent in two situations. When a call pushes spend past a limit and that call's
+response has no tool calls, the notice is sent after its `usage` and the turn then ends normally
+(`chat.done` `end_turn`). When a limit is already reached before an LLM call (a new turn, or the
+next call of a turn that uses tools), no call is made, the notice is sent, and the turn ends with
+`chat.done` reason `budget_exceeded`. Calls whose model has no known price add nothing to the spend,
+so they do not trigger either code. Show `message` as is; do not parse the amounts.
 
 ## Error codes
 
@@ -870,7 +943,7 @@ For the plugin author. Nothing below has been compiled; it follows from the deco
 - [ ] Decode nullable companion fields (`instanceId`/`turnId` in `error`, `turnId`/`callId` in
       `analysis.result`) with `decodeIfPresent`/optional types, accepting `null`.
 - [ ] Numbers: `Double` for `sampleRate`, `momentaryLufs`, `bands`. `Int` for `protocolVersion`,
-      `index`, `inputTokens`, `outputTokens`. Never encode `NaN` or `±infinity`; map to `null` or drop.
+      `index`, `inputTokens` (full prompt count), `outputTokens`. Never encode `NaN` or `±infinity`; map to `null` or drop.
 - [ ] `ProviderId`, `kind`, `status`, `outcome`, `reason` as `enum: String, Codable`. For companion →
       plugin enums prefer a custom `init(from:)` with an `unknown(String)` fallback so a newer
       companion does not make the whole message fail to decode.
@@ -895,7 +968,13 @@ For the plugin author. Nothing below has been compiled; it follows from the deco
       `messageId`.
 - [ ] Do not assume the `chat.send` result arrives before notifications for its turn. Buffer or
       create the turn lazily from the first notification.
-- [ ] End the turn UI on `chat.done` (including `cancelled`, `llm_error`, `iteration_limit`).
+- [ ] End the turn UI on `chat.done` (including `cancelled`, `llm_error`, `iteration_limit`,
+      `budget_exceeded`).
+- [ ] Show `error` notifications with code `budget_warning` as a non-blocking notice and
+      `budget_exceeded` as a blocking one; both carry display-ready `message` text.
+- [ ] `diagnostics.export` `params` are optional-field: omit `includeContent` or send a boolean, never
+      `null`. `json` and `text` in the result are `String`s (decode `json` again if you need fields).
+      Send `includeContent: true` only after the user agrees.
 - [ ] Show every `change.proposed` row to the user before any apply, allow per-row selection, send
       `change.decide` only on a user action (empty `acceptedRowIds` to decline), disable Apply at
       `expiresAt`, and show `change.applied.failed`. Do not send `change.decide` twice.
@@ -948,3 +1027,13 @@ Differences found between the code and
     removed on disconnect (`src/companion/service.ts`); a plugin that reconnects replaces its entry.
     The ADR says nothing about this. It is harmless for correctness, but is a slow leak in a
     long-running companion with many short-lived instances.
+17. **`diagnostics.export`, budget notices and `budget_exceeded`.** Not in the ADR, which predates
+    them: the request, the `budget_warning` and `budget_exceeded` `error` codes, and the
+    `budget_exceeded` `chat.done` reason are described from the code only. The ADR's `usage` entry
+    gives no field meanings; in the code `inputTokens` includes cached tokens.
+18. **Plugin side not present.** This base has no `plugin/` Swift scaffold and no `test/plugin`
+    directory (the only plugin material is the research notes in `docs/research/007-audio-unit-chat-plugin.md`
+    and `research/007-audio-unit-chat-plugin/`), so there is nothing to mirror. When the Swift client
+    is written it needs `diagnostics.export` (with optional `includeContent`), the extra `chat.done`
+    reason, the two new `error` codes and the changed `usage.inputTokens` meaning. The TypeScript
+    fixtures in `test/rpc/fixtures.ts` already include `diagnostics.export`.
