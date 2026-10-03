@@ -253,6 +253,7 @@ export const turnEndReasons = exhaustive<TurnEndReason>()(
   'iteration_limit',
   'llm_error',
   'cancelled',
+  'budget_exceeded',
 )
 
 export const changeStatuses = exhaustive<ChangeOutcome['status']>()(

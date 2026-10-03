@@ -1,6 +1,8 @@
 import { toAssistantMessage } from '../llm/client.js'
 import type { ChatRequest, JsonValue, Message, ToolCall, ToolResult } from '../llm/types.js'
 import type { ChangeRow, ToolError } from '../tools/types.js'
+import { emptyLedger } from '../usage/estimate.js'
+import type { BudgetState } from '../usage/types.js'
 import type {
   AgentConfig,
   AgentEffect,
@@ -13,18 +15,20 @@ import type {
   Step,
   TurnEndReason,
 } from './types.js'
-import { addUsage, emptyUsage } from './usage.js'
+import { accountUsage, budgetBlock } from './usage.js'
 
 export const initialState = (
   config: AgentConfig,
   messages: readonly Message[] = [],
+  budget: BudgetState | null = null,
 ): AgentState => ({
   config,
   messages,
   phase: { kind: 'idle' },
   iterations: 0,
   nextRequestId: 1,
-  usage: emptyUsage(config.pricing),
+  usage: emptyLedger,
+  budget,
 })
 
 const notify = (notification: AgentNotification): AgentEffect => ({ type: 'notify', notification })
@@ -53,6 +57,8 @@ const endTurn = (
 })
 
 const callLlm = (state: AgentState, effects: readonly AgentEffect[]): Step => {
+  const blocked = budgetBlock(state)
+  if (blocked !== undefined) return endTurn(state, 'budget_exceeded', [...effects, notify(blocked)])
   if (state.iterations >= state.config.maxIterations)
     return endTurn(state, 'iteration_limit', effects)
   const requestId = state.nextRequestId
@@ -225,17 +231,16 @@ export const step = (state: AgentState, event: AgentEvent): Step => {
           notify({ type: 'error', error: { kind: 'llm', error: event.result.error } }),
         ])
       const response = event.result.value
-      const usage = addUsage(state.usage, response.usage, state.config.pricing)
+      const accounted = accountUsage(state, response, response.toolCalls.length === 0)
       const next: AgentState = {
-        ...state,
-        usage,
+        ...accounted.state,
         messages: [...state.messages, toAssistantMessage(response)],
       }
       const effects: readonly AgentEffect[] = [
         ...(response.text.length > 0
           ? [notify({ type: 'assistant_message', text: response.text })]
           : []),
-        notify({ type: 'usage', call: response.usage, total: usage }),
+        ...accounted.notifications.map(notify),
       ]
       return response.toolCalls.length > 0
         ? processQueue(next, { queue: response.toolCalls, results: [] }, effects)

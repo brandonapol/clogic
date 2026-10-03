@@ -20,11 +20,20 @@ import type {
 import { listen, type RequestHandlers, type ServerSession } from '../rpc/socket.js'
 import { createRegistry, registryExecutor, type Registry } from '../tools/registry.js'
 import type { ToolError, Tool } from '../tools/types.js'
+import { createBudget, monthKey } from '../usage/budget.js'
+import type { BudgetState } from '../usage/types.js'
 import { companionName, companionSettings, type SettingsOverrides } from './config.js'
-import { handleAgentEvent, handleHello, handleRpc, initialCompanionState } from './router.js'
+import {
+  handleAgentEvent,
+  handleHello,
+  handleRpc,
+  initialCompanionState,
+  rollBudgetMonth,
+} from './router.js'
 import {
   companionErrorCodes,
   type CompanionEffect,
+  type CompanionSettings,
   type CompanionState,
   type ReplyFor,
   type RequestFor,
@@ -78,6 +87,12 @@ const send = <M extends CompanionNotificationMethod>(
   notification: { readonly method: M; readonly params: CompanionNotificationSpec[M] },
 ) => session.notify(notification.method, notification.params)
 
+const buildBudget = (settings: CompanionSettings, month: string): BudgetState => {
+  const budget = createBudget(settings.budget, month)
+  if (!budget.ok) throw new Error(`Invalid budget settings: ${budget.error.kind}`)
+  return budget.value
+}
+
 const buildRegistry = (tools: readonly Tool[]): Registry => {
   const registry = createRegistry(tools)
   if (!registry.ok) throw new Error(registry.error)
@@ -88,10 +103,13 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
   const registry = buildRegistry(options.tools)
   const now = options.now ?? Date.now
   const sessions = new Map<string, ServerSession>()
+  const settings = companionSettings(options.tools, options.settings)
   let state = initialCompanionState(
-    companionSettings(options.tools, options.settings),
+    settings,
     options.provider ?? null,
+    buildBudget(settings, monthKey(now())),
   )
+  const current = () => rollBudgetMonth(state, monthKey(now()))
 
   const deliver = (notification: CompanionNotification) => {
     const instanceId = notification.params.instanceId
@@ -111,7 +129,7 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
   }
 
   const route = <M extends RouterMethod>(method: M, request: RequestFor<M>) => {
-    const routed: ReplyFor<M> = handleRpc(state, method, request)
+    const routed: ReplyFor<M> = handleRpc(current(), method, request)
     commit(routed)
     return routed.reply
   }
@@ -180,7 +198,7 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
 
   const perform = async (effect: WorkEffect): Promise<void> => {
     const event = await eventFor(effect)
-    commit(handleAgentEvent(state, effect.instanceId, event))
+    commit(handleAgentEvent(current(), effect.instanceId, event))
   }
 
   const sameInstance = (

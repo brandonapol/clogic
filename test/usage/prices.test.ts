@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { Pricing } from '../../src/agent/types.js'
 import { adapters } from '../../src/llm/providers.js'
 import { providerIds } from '../../src/llm/types.js'
 import { agentPricing, defaultPriceTable, findPrice } from '../../src/usage/prices.js'
@@ -49,7 +48,6 @@ describe('price table', () => {
   it('converts to the agent config pricing shape', () => {
     const price = findPrice(defaultPriceTable, 'xai', 'grok-4.7')
     if (price === undefined) throw new Error('missing price')
-    const pricing: Pricing = agentPricing(price)
-    expect(pricing).toEqual({ inputUsdPerMillion: 2, outputUsdPerMillion: 6 })
+    expect(agentPricing(price)).toEqual({ inputUsdPerMillion: 2, outputUsdPerMillion: 6 })
   })
 })

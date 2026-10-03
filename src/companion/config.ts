@@ -2,6 +2,8 @@ import { adapters } from '../llm/providers.js'
 import type { ProviderId } from '../llm/types.js'
 import { buildSystemPrompt, promptTools } from '../prompts/system.js'
 import type { Tool } from '../tools/types.js'
+import { defaultWarnFraction, type BudgetLimitsInput } from '../usage/budget.js'
+import { defaultPriceTable } from '../usage/prices.js'
 import type { CompanionSettings } from './types.js'
 
 export const companionName = 'clogic-companion 0.0.0'
@@ -17,6 +19,12 @@ export const defaultModels: Readonly<Record<ProviderId, string>> = {
   xai: adapters.xai.defaultModel,
 }
 
+export const defaultBudgetLimits: BudgetLimitsInput = {
+  sessionUsd: 5,
+  monthlyUsd: 50,
+  warnFraction: defaultWarnFraction,
+}
+
 export type SettingsOverrides = Partial<Omit<CompanionSettings, 'tools'>>
 
 export const companionSettings = (
@@ -28,6 +36,8 @@ export const companionSettings = (
   maxIterations: 8,
   proposalTtlMs: 5 * 60_000,
   models: defaultModels,
+  prices: defaultPriceTable,
+  budget: defaultBudgetLimits,
   ...overrides,
   tools: tools.map((tool) => ({ definition: tool.definition, kind: tool.kind })),
 })

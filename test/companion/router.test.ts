@@ -6,10 +6,12 @@ import {
   handleHello,
   handleRpc,
   initialCompanionState,
+  rollBudgetMonth,
 } from '../../src/companion/router.js'
 import type { CompanionState } from '../../src/companion/types.js'
 import { ok } from '../../src/llm/result.js'
 import { readTools } from '../../src/companion/tools.js'
+import { createBudget } from '../../src/usage/budget.js'
 import { call, faderTool, response } from '../agent/fixtures.js'
 import { toolDeps } from './fixtures.js'
 
@@ -132,5 +134,63 @@ describe('summarize', () => {
     expect(summary).toHaveLength(maxSummaryLength)
     expect(summary.endsWith('…')).toBe(true)
     expect(summarize('short')).toBe('short')
+  })
+})
+
+describe('companion budget routing', () => {
+  const budgeted = (sessionUsd: number) => {
+    const settings = companionSettings(readTools(toolDeps))
+    const budget = createBudget({ sessionUsd, monthlyUsd: null }, '2026-10')
+    if (!budget.ok) throw new Error(budget.error.kind)
+    const hello = (state: CompanionState, id: string) =>
+      handleHello(state, {
+        instanceId: id,
+        contextName: null,
+        sampleRate: null,
+        protocolVersion: 1,
+        client: 'test',
+      }).state
+    return hello(hello(initialCompanionState(settings, 'anthropic', budget.value), 'a'), 'b')
+  }
+
+  const answer = (state: CompanionState, id: string) =>
+    handleAgentEvent(
+      handleRpc(state, 'chat.send', { method: 'chat.send', params: { instanceId: id, text: 'Hi' } })
+        .state,
+      id,
+      { type: 'llm_response', requestId: 1, result: ok(response('Hello')) },
+    ).state
+
+  it('charges every instance to one shared budget', () => {
+    const after = answer(answer(budgeted(1), 'a'), 'b')
+    expect(after.budget?.sessionSpentUsd).toBeCloseTo(0.006, 10)
+  })
+
+  it('blocks another instance once the shared budget is spent', () => {
+    const spent = answer(budgeted(0.003), 'a')
+    const blocked = handleRpc(spent, 'chat.send', {
+      method: 'chat.send',
+      params: { instanceId: 'b', text: 'Hi' },
+    })
+    expect(blocked.effects.some((effect) => effect.type === 'call_llm')).toBe(false)
+    expect(blocked.effects).toContainEqual({
+      type: 'notify',
+      notification: expect.objectContaining({
+        method: 'chat.done',
+        params: { instanceId: 'b', turnId: 'turn-1', reason: 'budget_exceeded' },
+      }) as unknown,
+    })
+  })
+
+  it('rolls the monthly total over when the month changes', () => {
+    const settings = companionSettings(readTools(toolDeps))
+    const budget = createBudget({ sessionUsd: null, monthlyUsd: 5 }, '2026-09', 5)
+    if (!budget.ok) throw new Error(budget.error.kind)
+    const state = initialCompanionState(settings, 'anthropic', budget.value)
+    expect(rollBudgetMonth(state, '2026-09')).toBe(state)
+    expect(rollBudgetMonth(state, '2026-10').budget).toMatchObject({
+      month: '2026-10',
+      monthSpentUsd: 0,
+    })
   })
 })
