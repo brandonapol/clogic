@@ -17,8 +17,8 @@ import { analysisDeps, faderTool } from '../agent/fixtures.js'
 
 export const instanceId = 'instance-1'
 
-export const anthropicKey = 'sk-ant-test-0123456789abcdef'
-export const openaiKey = 'sk-proj-test-0123456789abcdef'
+export const anthropicKey = 'sk-ant-test-FAKEFAKEFAKEFAKE'
+export const openaiKey = 'sk-proj-test-FAKEFAKEFAKEFAKE'
 
 export type LlmCall = {
   readonly provider: ProviderId
