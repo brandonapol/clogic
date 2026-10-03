@@ -46,6 +46,7 @@ final class RpcVectorTests: XCTestCase {
             case .keysSet: try assertRequest(KeysSetParams.self)
             case .keysStatus: try assertRequest(KeysStatusParams.self)
             case .providerSelect: try assertRequest(ProviderSelectParams.self)
+            case .diagnosticsExport: try assertRequest(DiagnosticsExportParams.self)
             }
         }
     }
@@ -73,6 +74,11 @@ final class RpcVectorTests: XCTestCase {
         let vectors = try Vectors.section("pluginNotifications")
         try assertNotification(MeterParams.self, vector: try XCTUnwrap(vectors["meter"]))
         try assertNotification(ContextChangedParams.self, vector: try XCTUnwrap(vectors["context.changed"]))
+    }
+
+    func testOptionalDiagnosticsFlagIsOmittedWhenUnset() throws {
+        let params = try paramsOf(RpcCodec.encodeRequest(id: 3, DiagnosticsExportParams()))
+        XCTAssertEqual(params, [:])
     }
 
     func testNullableFieldsAreSentAsExplicitNulls() throws {

@@ -13,6 +13,7 @@ public enum RequestMethod: String, CaseIterable, Sendable {
     case keysSet = "keys.set"
     case keysStatus = "keys.status"
     case providerSelect = "provider.select"
+    case diagnosticsExport = "diagnostics.export"
 }
 
 public enum PluginNotificationMethod: String, CaseIterable, Sendable {
@@ -48,6 +49,7 @@ public enum TurnEndReason: String, Codable, CaseIterable, Sendable {
     case iterationLimit = "iteration_limit"
     case llmError = "llm_error"
     case cancelled = "cancelled"
+    case budgetExceeded = "budget_exceeded"
 }
 
 public enum ToolKind: String, Codable, CaseIterable, Sendable {
@@ -223,6 +225,23 @@ public struct ProviderSelectParams: Codable, Equatable, RpcRequestParams {
 
 public struct ProviderSelectResult: Codable, Equatable, Sendable {
     public let activeProvider: ProviderId
+}
+
+public struct DiagnosticsExportParams: Codable, Equatable, RpcRequestParams {
+    public typealias Response = DiagnosticsExportResult
+    public static let method = RequestMethod.diagnosticsExport
+
+    public let includeContent: Bool?
+
+    public init(includeContent: Bool? = nil) {
+        self.includeContent = includeContent
+    }
+}
+
+public struct DiagnosticsExportResult: Codable, Equatable, Sendable {
+    public let includesContent: Bool
+    public let json: String
+    public let text: String
 }
 
 public struct MeterParams: Codable, Equatable, PluginNotificationParams {

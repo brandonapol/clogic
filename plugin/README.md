@@ -35,7 +35,7 @@ session change.
 
 The wire protocol is exactly `src/rpc` (protocol version 1): one JSON object per line, UTF-8, 1 MiB
 line limit; `session.hello` first; requests `chat.send`, `chat.cancel`, `change.decide`, `keys.set`,
-`keys.status`, `provider.select`; plugin notification `context.changed`; all ten companion
+`keys.status`, `provider.select`, `diagnostics.export` (codable only; the UI has no export button yet); plugin notification `context.changed`; all ten companion
 notifications are decoded and rendered. Nullable fields are always sent as explicit `null`, because
 the companion's decoders require every key.
 
@@ -71,7 +71,7 @@ the checked row IDs. Return does nothing in the dialog. Expired proposals cannot
 | Check                                                                                         | Result on 2026-10-03                                                            |
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `npm test` (`test/plugin/`): project spec, entitlements, web assets, secrets, field names     | Passes                                                                          |
-| `plugin/scripts/test-core-linux.sh`: `Core/` + `Tests/` built and run with Swift 6.4 on Linux | 50 XCTests pass (swift-corelibs-foundation)                                     |
+| `plugin/scripts/test-core-linux.sh`: `Core/` + `Tests/` built and run with Swift 6.4 on Linux | 51 XCTests pass (swift-corelibs-foundation)                                     |
 | `Core/` codec over a real UNIX socket against `listen()` from `src/rpc/socket.ts`             | Hello, every request and notification round-trip; no protocol problems reported |
 | `Web/` in headless Chromium with a stubbed `webkit.messageHandlers`                           | Renders; HTML in messages is shown as text                                      |
 

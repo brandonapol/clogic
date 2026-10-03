@@ -76,6 +76,16 @@
       "result": {
         "activeProvider": "openai"
       }
+    },
+    "diagnostics.export": {
+      "params": {
+        "includeContent": false
+      },
+      "result": {
+        "includesContent": false,
+        "json": "{\"format\":\"clogic-diagnostics\"}\n",
+        "text": "clogic diagnostics\n"
+      }
     }
   },
   "pluginNotifications": {

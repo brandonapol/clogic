@@ -344,7 +344,12 @@ describe('Swift codables match src/rpc', () => {
     'keys.set': ['KeysSetParams', 'KeyStatus'],
     'keys.status': ['KeysStatusParams', 'KeysStatusResult'],
     'provider.select': ['ProviderSelectParams', 'ProviderSelectResult'],
+    'diagnostics.export': ['DiagnosticsExportParams', 'DiagnosticsExportResult'],
   } as const
+
+  it('covers every request method', () => {
+    expect(sorted(Object.keys(requestTypes))).toEqual(sorted(Object.keys(requestDecoders)))
+  })
 
   it.each(Object.entries(requestTypes))(
     '%s params and result fields match',
@@ -467,8 +472,10 @@ describe('web view bridge', () => {
     )
   })
 
-  it('only expects responses to requests the UI can make', () => {
-    const uiRequests = Object.keys(requestDecoders).filter((method) => method !== 'session.hello')
+  it('handles the response to every request the UI makes, and only those', () => {
+    const posted = Array.from(js.matchAll(/post\(\{ type: '([^']+)'/g), (match) => match[1] ?? '')
+    const uiRequests = [...new Set(posted)].filter((type) => Object.hasOwn(requestDecoders, type))
+    expect(uiRequests).not.toContain('session.hello')
     expect(sorted(objectKeys('responseHandlers'))).toEqual(sorted(uiRequests))
   })
 })

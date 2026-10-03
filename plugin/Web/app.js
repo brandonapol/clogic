@@ -40,6 +40,7 @@ const endReasonNotes = {
   iteration_limit: 'Stopped after too many tool calls in one turn.',
   llm_error: 'The provider returned an error.',
   cancelled: 'Stopped.',
+  budget_exceeded: 'Stopped: the usage budget for this chat was reached.',
   other: 'The reply ended early.',
 }
 
