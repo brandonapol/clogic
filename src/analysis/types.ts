@@ -150,3 +150,9 @@ export type AnalysisError =
   | { readonly kind: 'empty-audio'; readonly path: string }
   | { readonly kind: 'read-failed'; readonly path: string; readonly message: string }
   | { readonly kind: 'no-stems'; readonly path: string }
+  | {
+      readonly kind: 'short-decode'
+      readonly path: string
+      readonly expectedFrames: number
+      readonly decodedFrames: number
+    }

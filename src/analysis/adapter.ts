@@ -88,6 +88,45 @@ export const deinterleave = (bytes: Buffer, channelCount: number): readonly Floa
   return channels
 }
 
+export type DecodeStrategy = 'default' | 'manual-trailing-trim'
+
+export const expectedFrames = (info: AudioInfo): number =>
+  Math.round(info.durationSeconds * info.sampleRate)
+
+export const decodeStrategy = (info: AudioInfo): DecodeStrategy =>
+  info.codec === 'alac' && info.container === 'caf' ? 'manual-trailing-trim' : 'default'
+
+const EXACT_LENGTH_CODECS: readonly string[] = ['alac', 'flac']
+
+export const hasExactLength = (info: AudioInfo): boolean =>
+  info.codec.startsWith('pcm_') || EXACT_LENGTH_CODECS.includes(info.codec)
+
+export const checkDecodedLength = (
+  info: AudioInfo,
+  decodedFrames: number,
+): Result<number, AnalysisError> => {
+  const expected = expectedFrames(info)
+  return hasExactLength(info) && expected > 0 && decodedFrames < expected - 1
+    ? err({ kind: 'short-decode', path: info.path, expectedFrames: expected, decodedFrames })
+    : ok(decodedFrames)
+}
+
+const decodeArgs = (info: AudioInfo, filters: readonly string[]): readonly string[] => {
+  const manual = decodeStrategy(info) === 'manual-trailing-trim'
+  const chain = [
+    ...(manual ? [`atrim=end_sample=${String(expectedFrames(info))}`] : []),
+    ...filters,
+  ]
+  return [
+    ...(manual ? ['-flags2', '+skip_manual'] : []),
+    '-i',
+    info.path,
+    '-map',
+    '0:a:0',
+    ...(chain.length > 0 ? ['-af', chain.join(',')] : []),
+  ]
+}
+
 export const decodePcm = async (
   info: AudioInfo,
   tools: Tools = DEFAULT_TOOLS,
@@ -97,10 +136,7 @@ export const decodePcm = async (
     '-v',
     'error',
     '-nostdin',
-    '-i',
-    info.path,
-    '-map',
-    '0:a:0',
+    ...decodeArgs(info, []),
     '-ac',
     String(channelCount),
     '-f',
@@ -111,12 +147,14 @@ export const decodePcm = async (
   ])
   if (!result.ok) return result
   const channels = deinterleave(result.value.stdout, channelCount)
-  if ((channels[0]?.length ?? 0) === 0) return err({ kind: 'empty-audio', path: info.path })
-  return ok({ sampleRate: info.sampleRate, channels })
+  const decodedFrames = channels[0]?.length ?? 0
+  if (decodedFrames === 0) return err({ kind: 'empty-audio', path: info.path })
+  const length = checkDecodedLength(info, decodedFrames)
+  return length.ok ? ok({ sampleRate: info.sampleRate, channels }) : length
 }
 
-export const measureLoudness = async (
-  path: string,
+export const measureLoudnessOf = async (
+  info: AudioInfo,
   tools: Tools = DEFAULT_TOOLS,
 ): Promise<Result<LoudnessMeasurement, AnalysisError>> => {
   const result = await run(tools.ffmpeg, [
@@ -125,17 +163,20 @@ export const measureLoudness = async (
     '-nostats',
     '-v',
     'info',
-    '-i',
-    path,
-    '-map',
-    '0:a:0',
-    '-af',
-    'ebur128=peak=true:framelog=info',
+    ...decodeArgs(info, ['ebur128=peak=true:framelog=info']),
     '-f',
     'null',
     '-',
   ])
   return result.ok ? parseEbur128Log(result.value.stderr) : result
+}
+
+export const measureLoudness = async (
+  path: string,
+  tools: Tools = DEFAULT_TOOLS,
+): Promise<Result<LoudnessMeasurement, AnalysisError>> => {
+  const info = await probeAudio(path, tools)
+  return info.ok ? measureLoudnessOf(info.value, tools) : info
 }
 
 export const isAudioFileName = (name: string): boolean =>

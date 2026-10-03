@@ -81,4 +81,15 @@ describe('analysis read tools', () => {
       describeAnalysisError({ kind: 'tool-failed', tool: 'ffprobe', exitCode: 1, stderr: 'bad' }),
     ).toBe('ffprobe failed (exit code 1): bad')
   })
+
+  it('describes a short decode with the frame counts', () => {
+    expect(
+      describeAnalysisError({
+        kind: 'short-decode',
+        path: '/tmp/x.caf',
+        expectedFrames: 24000,
+        decodedFrames: 23424,
+      }),
+    ).toBe('/tmp/x.caf decoded 23424 of 24000 sample frames, so it was not analysed')
+  })
 })

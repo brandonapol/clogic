@@ -40,6 +40,8 @@ export const describeAnalysisError = (error: AnalysisError): string => {
       return `Could not read ${error.path}: ${error.message}`
     case 'no-stems':
       return `No audio files found in ${error.path}`
+    case 'short-decode':
+      return `${error.path} decoded ${String(error.decodedFrames)} of ${String(error.expectedFrames)} sample frames, so it was not analysed`
   }
 }
 
