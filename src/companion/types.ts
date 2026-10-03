@@ -14,7 +14,7 @@ import type {
 import type { ChangeRow } from '../tools/types.js'
 
 export type CompanionSettings = {
-  readonly system: string
+  readonly system: (provider: ProviderId) => string
   readonly maxOutputTokens: number
   readonly maxIterations: number
   readonly proposalTtlMs: number

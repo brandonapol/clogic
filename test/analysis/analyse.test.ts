@@ -7,94 +7,100 @@ import type { AnalysisReport } from '../../src/analysis/types.js'
 import { dbfs, pcm, renderLavfi, stereoTone } from './fixtures.js'
 import { hasFfmpeg } from './signals.js'
 
-describe.skipIf(!hasFfmpeg())('analyseFile against reference signals', () => {
-  let dir = ''
-  beforeAll(() => {
-    dir = mkdtempSync(join(tmpdir(), 'clogic-analyse-'))
-  })
-  afterAll(() => rmSync(dir, { recursive: true, force: true }))
+const ffmpegTimeoutMs = 30_000
 
-  const analyse = async (name: string, source: string): Promise<AnalysisReport> => {
-    const result = await analyseFile(renderLavfi(dir, name, source))
-    if (!result.ok) throw new Error(JSON.stringify(result.error))
-    return result.value
-  }
+describe.skipIf(!hasFfmpeg())(
+  'analyseFile against reference signals',
+  { timeout: ffmpegTimeoutMs },
+  () => {
+    let dir = ''
+    beforeAll(() => {
+      dir = mkdtempSync(join(tmpdir(), 'clogic-analyse-'))
+    })
+    afterAll(() => rmSync(dir, { recursive: true, force: true }))
 
-  it('EBU Tech 3341 case 2: stereo 1 kHz at -33 dBFS reads -33 LUFS', async () => {
-    const report = await analyse('ebu-case2', stereoTone(dbfs(-33), 1000, 20))
-    expect(Math.abs(report.loudness.integratedLufs + 33)).toBeLessThanOrEqual(0.1)
-    expect(report.dynamics.samplePeakDbfs).toBeCloseTo(-33, 1)
-    expect(report.dynamics.crestFactorDb).toBeCloseTo(3, 1)
-    expect(report.stereo).toMatchObject({ kind: 'stereo', correlation: 1 })
-  })
+    const analyse = async (name: string, source: string): Promise<AnalysisReport> => {
+      const result = await analyseFile(renderLavfi(dir, name, source))
+      if (!result.ok) throw new Error(JSON.stringify(result.error))
+      return result.value
+    }
 
-  it('EBU Tech 3342 case 1: 20 s at -20 dBFS then 20 s at -30 dBFS reads LRA 10 LU', async () => {
-    const gain = `if(lt(t\\,20)\\,${dbfs(-20)}\\,${dbfs(-30)})`
-    const tone = `${gain}*sin(2*PI*1000*t)`
-    const report = await analyse('ebu-lra1', `aevalsrc=${tone}|${tone}:s=48000:d=40`)
-    expect(Math.abs(report.loudness.loudnessRangeLu - 10)).toBeLessThanOrEqual(1)
-    expect(report.loudness.shortTermMaxLufs).toBeCloseTo(-20, 0)
-  }, 30_000)
+    it('EBU Tech 3341 case 2: stereo 1 kHz at -33 dBFS reads -33 LUFS', async () => {
+      const report = await analyse('ebu-case2', stereoTone(dbfs(-33), 1000, 20))
+      expect(Math.abs(report.loudness.integratedLufs + 33)).toBeLessThanOrEqual(0.1)
+      expect(report.dynamics.samplePeakDbfs).toBeCloseTo(-33, 1)
+      expect(report.dynamics.crestFactorDb).toBeCloseTo(3, 1)
+      expect(report.stereo).toMatchObject({ kind: 'stereo', correlation: 1 })
+    })
 
-  it('reads the true peak of a 1 kHz sine at -6.02 dBFS', async () => {
-    const report = await analyse('tp-1k', 'aevalsrc=0.5*sin(2*PI*1000*t):s=48000:d=5')
-    expect(Math.abs(report.loudness.truePeakDbtp + 6.02)).toBeLessThanOrEqual(0.1)
-    expect(report.stereo).toEqual({ kind: 'mono' })
-  })
+    it('EBU Tech 3342 case 1: 20 s at -20 dBFS then 20 s at -30 dBFS reads LRA 10 LU', async () => {
+      const gain = `if(lt(t\\,20)\\,${dbfs(-20)}\\,${dbfs(-30)})`
+      const tone = `${gain}*sin(2*PI*1000*t)`
+      const report = await analyse('ebu-lra1', `aevalsrc=${tone}|${tone}:s=48000:d=40`)
+      expect(Math.abs(report.loudness.loudnessRangeLu - 10)).toBeLessThanOrEqual(1)
+      expect(report.loudness.shortTermMaxLufs).toBeCloseTo(-20, 0)
+    }, 30_000)
 
-  const truePeakCases = [
-    { case: 15, hz: 12000, amplitude: 0.5, phase: '0', expected: -6 },
-    { case: 16, hz: 12000, amplitude: 0.5, phase: 'PI/4', expected: -6 },
-    { case: 17, hz: 8000, amplitude: 0.5, phase: 'PI/3', expected: -6 },
-    { case: 18, hz: 6000, amplitude: 0.5, phase: '3*PI/8', expected: -6 },
-    { case: 19, hz: 12000, amplitude: 1.41, phase: 'PI/4', expected: 3 },
-  ] as const
+    it('reads the true peak of a 1 kHz sine at -6.02 dBFS', async () => {
+      const report = await analyse('tp-1k', 'aevalsrc=0.5*sin(2*PI*1000*t):s=48000:d=5')
+      expect(Math.abs(report.loudness.truePeakDbtp + 6.02)).toBeLessThanOrEqual(0.1)
+      expect(report.stereo).toEqual({ kind: 'mono' })
+    })
 
-  it.each(truePeakCases)(
-    'EBU Tech 3341 case $case: tapered sine reads $expected dBTP within +0.2/-0.4 dB',
-    async ({ case: n, hz, amplitude, phase, expected }) => {
-      const tone = `${amplitude}*sin(2*PI*${hz}*t+${phase})`
-      const taper = 'afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01'
-      const report = await analyse(`ebu-tp${n}`, `aevalsrc=${tone}|${tone}:s=48000:d=5,${taper}`)
-      expect(report.loudness.truePeakDbtp).toBeGreaterThanOrEqual(expected - 0.4)
-      expect(report.loudness.truePeakDbtp).toBeLessThanOrEqual(expected + 0.2)
-    },
-  )
+    const truePeakCases = [
+      { case: 15, hz: 12000, amplitude: 0.5, phase: '0', expected: -6 },
+      { case: 16, hz: 12000, amplitude: 0.5, phase: 'PI/4', expected: -6 },
+      { case: 17, hz: 8000, amplitude: 0.5, phase: 'PI/3', expected: -6 },
+      { case: 18, hz: 6000, amplitude: 0.5, phase: '3*PI/8', expected: -6 },
+      { case: 19, hz: 12000, amplitude: 1.41, phase: 'PI/4', expected: 3 },
+    ] as const
 
-  it('sees the inter-sample peak 3 dB above the sample peak in case 16', async () => {
-    const report = await analyse(
-      'tp-intersample',
-      'aevalsrc=0.5*sin(2*PI*12000*t+PI/4):s=48000:d=5,afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01',
+    it.each(truePeakCases)(
+      'EBU Tech 3341 case $case: tapered sine reads $expected dBTP within +0.2/-0.4 dB',
+      async ({ case: n, hz, amplitude, phase, expected }) => {
+        const tone = `${amplitude}*sin(2*PI*${hz}*t+${phase})`
+        const taper = 'afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01'
+        const report = await analyse(`ebu-tp${n}`, `aevalsrc=${tone}|${tone}:s=48000:d=5,${taper}`)
+        expect(report.loudness.truePeakDbtp).toBeGreaterThanOrEqual(expected - 0.4)
+        expect(report.loudness.truePeakDbtp).toBeLessThanOrEqual(expected + 0.2)
+      },
     )
-    expect(report.dynamics.samplePeakDbfs).toBeCloseTo(-9, 0)
-    expect(report.loudness.truePeakDbtp - report.dynamics.samplePeakDbfs).toBeCloseTo(3, 0)
-  })
 
-  it('flags a loud, limited, phase-inverted mix', async () => {
-    const report = await analyse(
-      'bad-mix',
-      'aevalsrc=0.99*sin(2*PI*80*t)|-0.99*sin(2*PI*80*t):s=48000:d=5',
-    )
-    const codes = report.findings.map((f) => f.code)
-    expect(report.role).toBe('mix')
-    expect(codes).toEqual(
-      expect.arrayContaining([
-        'true-peak-high',
-        'streaming-normalisation',
-        'negative-correlation',
-        'mono-loss',
-        'wide-low-end',
-      ]),
-    )
-  })
+    it('sees the inter-sample peak 3 dB above the sample peak in case 16', async () => {
+      const report = await analyse(
+        'tp-intersample',
+        'aevalsrc=0.5*sin(2*PI*12000*t+PI/4):s=48000:d=5,afade=t=in:d=0.01,afade=t=out:st=4.99:d=0.01',
+      )
+      expect(report.dynamics.samplePeakDbfs).toBeCloseTo(-9, 0)
+      expect(report.loudness.truePeakDbtp - report.dynamics.samplePeakDbfs).toBeCloseTo(3, 0)
+    })
 
-  it('returns a tool failure for a missing file', async () => {
-    const result = await analyseFile(join(dir, 'missing.wav'))
-    expect(!result.ok && result.error.kind).toBe('tool-failed')
-  })
-})
+    it('flags a loud, limited, phase-inverted mix', async () => {
+      const report = await analyse(
+        'bad-mix',
+        'aevalsrc=0.99*sin(2*PI*80*t)|-0.99*sin(2*PI*80*t):s=48000:d=5',
+      )
+      const codes = report.findings.map((f) => f.code)
+      expect(report.role).toBe('mix')
+      expect(codes).toEqual(
+        expect.arrayContaining([
+          'true-peak-high',
+          'streaming-normalisation',
+          'negative-correlation',
+          'mono-loss',
+          'wide-low-end',
+        ]),
+      )
+    })
 
-describe.skipIf(!hasFfmpeg())('analyseStemFolder', () => {
+    it('returns a tool failure for a missing file', async () => {
+      const result = await analyseFile(join(dir, 'missing.wav'))
+      expect(!result.ok && result.error.kind).toBe('tool-failed')
+    })
+  },
+)
+
+describe.skipIf(!hasFfmpeg())('analyseStemFolder', { timeout: ffmpegTimeoutMs }, () => {
   let dir = ''
   beforeAll(() => {
     dir = mkdtempSync(join(tmpdir(), 'clogic-stems-'))

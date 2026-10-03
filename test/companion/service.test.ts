@@ -92,9 +92,16 @@ describe('chat turn over the socket', () => {
     expect(first?.tools.map((tool) => tool.name)).toEqual([
       'get_loudness',
       'analyse_mix',
+      'analyse_stems',
+      'compare_reference',
+      'list_audio_files',
       'search_logic_docs',
       'set_fader_db',
     ])
+    expect(first?.system).toContain(
+      'Tools available in this conversation: analyse_mix, analyse_stems, compare_reference, get_loudness, list_audio_files, search_logic_docs, set_fader_db.',
+    )
+    expect(first?.system).toContain('an Anthropic Claude model')
     expect(llm.calls[1]?.request.messages.at(-1)).toMatchObject({
       role: 'tool',
       results: [{ callId: 'c1', isError: false }],
@@ -321,6 +328,8 @@ describe('keys and providers', () => {
       ['openai', openaiKey, defaultModels.openai],
     ])
     expect(llm.calls[1]?.request.messages.map((m) => m.role)).toEqual(['user', 'assistant', 'user'])
+    expect(llm.calls[0]?.request.system).toContain('an Anthropic Claude model')
+    expect(llm.calls[1]?.request.system).toContain('an OpenAI model')
   })
 })
 

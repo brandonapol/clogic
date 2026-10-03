@@ -22,9 +22,16 @@ import {
 const modelFor = (settings: CompanionSettings, provider: ProviderId | null): string =>
   provider === null ? '' : settings.models[provider]
 
-const agentConfig = (settings: CompanionSettings, provider: ProviderId | null): AgentConfig => ({
+const systemFor = (settings: CompanionSettings, provider: ProviderId | null): string =>
+  provider === null ? '' : settings.system(provider)
+
+const providerConfig = (settings: CompanionSettings, provider: ProviderId | null) => ({
   model: modelFor(settings, provider),
-  system: settings.system,
+  system: systemFor(settings, provider),
+})
+
+const agentConfig = (settings: CompanionSettings, provider: ProviderId | null): AgentConfig => ({
+  ...providerConfig(settings, provider),
   maxOutputTokens: settings.maxOutputTokens,
   maxIterations: settings.maxIterations,
   proposalTtlMs: settings.proposalTtlMs,
@@ -62,7 +69,7 @@ const withProvider = (state: CompanionState, provider: ProviderId): CompanionSta
         ...conversation,
         agent: {
           ...conversation.agent,
-          config: { ...conversation.agent.config, model: modelFor(state.settings, provider) },
+          config: { ...conversation.agent.config, ...providerConfig(state.settings, provider) },
         },
       },
     ]),
@@ -159,11 +166,22 @@ const rejected = (state: CompanionState, error: RpcErrorObject) => ({
   reply: err(error),
 })
 
+const refreshConfig = (state: CompanionState, conversation: Conversation): Conversation => ({
+  ...conversation,
+  agent: {
+    ...conversation.agent,
+    config: {
+      ...conversation.agent.config,
+      ...providerConfig(state.settings, state.activeProvider),
+    },
+  },
+})
+
 const onChatSend = (
   state: CompanionState,
   request: RequestFor<'chat.send'>,
 ): ReplyFor<'chat.send'> => {
-  const conversation = conversationOf(state, request.params.instanceId)
+  const conversation = refreshConfig(state, conversationOf(state, request.params.instanceId))
   if (state.activeProvider === null)
     return rejected(
       state,
