@@ -1,0 +1,89 @@
+name: Clogic
+options:
+  deploymentTarget:
+    macOS: '15.6'
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Signing.xcconfig
+  Release: Config/Signing.xcconfig
+settings:
+  base:
+    ARCHS: arm64
+    MACOSX_DEPLOYMENT_TARGET: '15.6'
+    SWIFT_VERSION: '5.0'
+    SWIFT_STRICT_CONCURRENCY: minimal
+    ENABLE_HARDENED_RUNTIME: 'YES'
+    MARKETING_VERSION: 0.0.1
+    CURRENT_PROJECT_VERSION: '1'
+    DEAD_CODE_STRIPPING: 'YES'
+  configs:
+    Release:
+      CODE_SIGN_INJECT_BASE_ENTITLEMENTS: 'NO'
+targets:
+  ClogicApp:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+        excludes:
+          - Info.plist
+          - App.entitlements
+    dependencies:
+      - target: ClogicExtension
+        embed: true
+    settings:
+      base:
+        PRODUCT_NAME: clogic
+        PRODUCT_BUNDLE_IDENTIFIER: $(CLOGIC_BUNDLE_ID_PREFIX).clogic
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/App.entitlements
+  ClogicExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Extension
+        excludes:
+          - Info.plist
+          - Extension.entitlements
+      - path: Core
+      - path: Web
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_NAME: clogic
+        PRODUCT_MODULE_NAME: ClogicExtension
+        PRODUCT_BUNDLE_IDENTIFIER: $(CLOGIC_BUNDLE_ID_PREFIX).clogic.audiounit
+        INFOPLIST_FILE: Extension/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Extension/Extension.entitlements
+        APPLICATION_EXTENSION_API_ONLY: 'YES'
+        SKIP_INSTALL: 'YES'
+  ClogicCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Core
+      - path: Tests
+        excludes:
+          - Vectors
+      - path: Tests/Vectors
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(CLOGIC_BUNDLE_ID_PREFIX).clogic.coretests
+        GENERATE_INFOPLIST_FILE: 'YES'
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: '-'
+        DEVELOPMENT_TEAM: ''
+        ENABLE_HARDENED_RUNTIME: 'NO'
+schemes:
+  Clogic:
+    build:
+      targets:
+        ClogicApp: all
+        ClogicCoreTests:
+          - test
+    test:
+      targets:
+        - ClogicCoreTests

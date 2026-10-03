@@ -1,0 +1,208 @@
+{
+  "protocolVersion": 1,
+  "requests": {
+    "session.hello": {
+      "params": {
+        "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+        "contextName": "Vox",
+        "sampleRate": 48000,
+        "protocolVersion": 1,
+        "client": "clogic.appex 0.1.0"
+      },
+      "result": {
+        "protocolVersion": 1,
+        "companion": "clogic-companion 0.1.0"
+      }
+    },
+    "chat.send": {
+      "params": {
+        "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+        "text": "How loud is my mix?"
+      },
+      "result": {
+        "turnId": "turn-1"
+      }
+    },
+    "chat.cancel": {
+      "params": {
+        "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+        "turnId": "turn-1"
+      },
+      "result": {
+        "cancelled": true
+      }
+    },
+    "change.decide": {
+      "params": {
+        "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+        "proposalId": "p-1",
+        "acceptedRowIds": ["r-1"]
+      },
+      "result": {
+        "proposalId": "p-1",
+        "outcome": "applying"
+      }
+    },
+    "keys.set": {
+      "params": {
+        "provider": "anthropic",
+        "key": "sk-ant-test"
+      },
+      "result": {
+        "provider": "anthropic",
+        "configured": true
+      }
+    },
+    "keys.status": {
+      "params": {},
+      "result": {
+        "providers": [
+          {
+            "provider": "anthropic",
+            "configured": true
+          },
+          {
+            "provider": "openai",
+            "configured": false
+          }
+        ],
+        "activeProvider": "anthropic"
+      }
+    },
+    "provider.select": {
+      "params": {
+        "provider": "openai"
+      },
+      "result": {
+        "activeProvider": "openai"
+      }
+    },
+    "diagnostics.export": {
+      "params": {
+        "includeContent": false
+      },
+      "result": {
+        "includesContent": false,
+        "json": "{\"format\":\"clogic-diagnostics\"}\n",
+        "text": "clogic diagnostics\n"
+      }
+    }
+  },
+  "pluginNotifications": {
+    "meter": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "momentaryLufs": -14.2,
+      "bands": [-20, -18.5, -30]
+    },
+    "context.changed": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "contextName": "Lead Vox"
+    }
+  },
+  "companionNotifications": {
+    "chat.message": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "messageId": "m-1",
+      "text": "Your mix is at -9 LUFS."
+    },
+    "chat.delta": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "messageId": "m-1",
+      "index": 0,
+      "text": "Your "
+    },
+    "chat.done": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "reason": "end_turn"
+    },
+    "tool.started": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "callId": "c-1",
+      "name": "get_loudness",
+      "kind": "read",
+      "input": {
+        "path": "/tmp/mix.wav"
+      }
+    },
+    "tool.finished": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "callId": "c-1",
+      "name": "get_loudness",
+      "status": "ok",
+      "summary": "-9.1 LUFS integrated"
+    },
+    "change.proposed": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "proposalId": "p-1",
+      "reason": "Vocal is masked by the guitars",
+      "rows": [
+        {
+          "id": "r-1",
+          "control": "fader",
+          "location": "Vox",
+          "before": -3,
+          "after": -6
+        },
+        {
+          "id": "r-2",
+          "control": "pan",
+          "location": "Gtr",
+          "before": null,
+          "after": {
+            "pan": -20
+          }
+        }
+      ],
+      "expiresAt": "2026-10-02T12:05:00.000Z"
+    },
+    "change.applied": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "proposalId": "p-1",
+      "status": "applied",
+      "applied": ["r-1"],
+      "declined": ["r-2"],
+      "failed": []
+    },
+    "analysis.result": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "callId": "c-1",
+      "analysis": "loudness",
+      "summary": "-9.1 LUFS integrated, -0.3 dBTP",
+      "data": {
+        "integratedLufs": -9.1,
+        "truePeakDbtp": -0.3,
+        "bands": [1, 2, 3],
+        "notes": null
+      }
+    },
+    "usage": {
+      "instanceId": "4b8f6c1e-2a0d-4c51-9d1b-7f3a2e9c0b11",
+      "turnId": "turn-1",
+      "inputTokens": 1200,
+      "outputTokens": 340
+    },
+    "error": {
+      "instanceId": null,
+      "turnId": null,
+      "code": "provider_unavailable",
+      "message": "No API key"
+    }
+  },
+  "errorCodes": {
+    "parseError": -32700,
+    "invalidRequest": -32600,
+    "methodNotFound": -32601,
+    "invalidParams": -32602,
+    "internalError": -32603,
+    "unsupportedProtocolVersion": -32000,
+    "handshakeRequired": -32001,
+    "messageTooLarge": -32002,
+    "connectionClosed": -32003
+  }
+}
