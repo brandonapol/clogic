@@ -80,6 +80,7 @@ export type HarnessOptions = {
   readonly now?: () => number
   readonly settings?: SettingsOverrides
   readonly logger?: Logger
+  readonly secrets?: () => readonly string[]
 }
 
 export const startHarness = async (options: HarnessOptions): Promise<Harness> => {
@@ -94,6 +95,7 @@ export const startHarness = async (options: HarnessOptions): Promise<Harness> =>
     now: options.now ?? (() => Date.parse('2026-10-02T12:00:00Z')),
     ...(options.settings === undefined ? {} : { settings: options.settings }),
     ...(options.logger === undefined ? {} : { logger: options.logger }),
+    ...(options.secrets === undefined ? {} : { secrets: options.secrets }),
   })
   const client = await connect({ path: companion.path })
   const notifications: CompanionNotification[] = []

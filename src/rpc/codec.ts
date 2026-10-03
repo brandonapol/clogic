@@ -78,6 +78,7 @@ const requestBuilders: {
   'keys.set': requestBuilder('keys.set'),
   'keys.status': requestBuilder('keys.status'),
   'provider.select': requestBuilder('provider.select'),
+  'diagnostics.export': requestBuilder('diagnostics.export'),
 }
 
 const pluginNotificationBuilders: {

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { companionSettings } from '../../src/companion/config.js'
+import {
+  budgetEnvVars,
+  budgetFromEnv,
+  companionSettings,
+  defaultBudgetLimits,
+} from '../../src/companion/config.js'
+import { ok } from '../../src/llm/result.js'
 import { companionTools, readTools } from '../../src/companion/tools.js'
 import { buildSystemPrompt, promptTools } from '../../src/prompts/system.js'
 import { harness, mixerSession } from '../tools/mixer/fixtures.js'
@@ -74,5 +80,34 @@ describe('companionSettings system prompt', () => {
     const settings = companionSettings(readTools(toolDeps), { system: () => 'fixed' })
 
     expect(settings.system('anthropic')).toBe('fixed')
+  })
+})
+
+describe('budget settings', () => {
+  it('defaults to a $5 session and $50 monthly budget warning at 80%', () => {
+    expect(companionSettings([]).budget).toEqual({
+      sessionUsd: 5,
+      monthlyUsd: 50,
+      warnFraction: 0.8,
+    })
+    expect(defaultBudgetLimits).toEqual(companionSettings([]).budget)
+  })
+
+  it('reads limits from the environment', () => {
+    expect(
+      budgetFromEnv({
+        [budgetEnvVars.sessionUsd]: ' 2.5 ',
+        [budgetEnvVars.monthlyUsd]: 'off',
+      }),
+    ).toEqual(ok({ sessionUsd: 2.5, monthlyUsd: null, warnFraction: 0.8 }))
+  })
+
+  it('keeps the defaults when nothing is set', () => {
+    expect(budgetFromEnv({})).toEqual(ok(defaultBudgetLimits))
+  })
+
+  it.each(['0', '-1', 'ten', 'Infinity'])('rejects %s as a limit', (value) => {
+    const parsed = budgetFromEnv({ [budgetEnvVars.monthlyUsd]: value })
+    expect(parsed.ok).toBe(false)
   })
 })

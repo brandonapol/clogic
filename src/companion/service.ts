@@ -2,7 +2,9 @@ import type { AgentEvent, AgentLlmError } from '../agent/types.js'
 import { llmError, providerNames } from '../llm/errors.js'
 import type { KeyStore, KeyStoreError } from '../llm/keystore.js'
 import { redactSecrets } from '../llm/redact.js'
-import { err, type Err, type Result } from '../llm/result.js'
+import { err, ok, type Err, type Result } from '../llm/result.js'
+import { diagnosticsBundle } from '../log/diagnostics.js'
+import { createLogger, type Logger } from '../log/logger.js'
 import {
   providerIds,
   type ChatRequest,
@@ -22,6 +24,7 @@ import { createRegistry, registryExecutor, type Registry } from '../tools/regist
 import type { ToolError, Tool } from '../tools/types.js'
 import { createBudget, monthKey } from '../usage/budget.js'
 import type { BudgetState } from '../usage/types.js'
+import { systemEnvironment, type CompanionEnvironment } from './environment.js'
 import { companionName, companionSettings, type SettingsOverrides } from './config.js'
 import {
   handleAgentEvent,
@@ -54,6 +57,9 @@ export type CompanionOptions = {
   readonly settings?: SettingsOverrides
   readonly now?: () => number
   readonly name?: string
+  readonly logger?: Logger
+  readonly secrets?: () => readonly string[]
+  readonly environment?: () => CompanionEnvironment
 }
 
 export type Companion = {
@@ -102,6 +108,12 @@ const buildRegistry = (tools: readonly Tool[]): Registry => {
 export const startCompanion = async (options: CompanionOptions): Promise<Companion> => {
   const registry = buildRegistry(options.tools)
   const now = options.now ?? Date.now
+  const secrets = options.secrets ?? (() => [])
+  const logger = options.logger ?? createLogger({ now, secrets })
+  const rpcLog = logger.child({ component: 'rpc' })
+  const llmLog = logger.child({ component: 'llm' })
+  const toolLog = logger.child({ component: 'tools' })
+  const chatLog = logger.child({ component: 'chat' })
   const sessions = new Map<string, ServerSession>()
   const settings = companionSettings(options.tools, options.settings)
   let state = initialCompanionState(
@@ -112,6 +124,11 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
   const current = () => rollBudgetMonth(state, monthKey(now()))
 
   const deliver = (notification: CompanionNotification) => {
+    if (notification.method === 'error')
+      chatLog.warn('chat.error', {
+        code: notification.params.code,
+        detail: notification.params.message,
+      })
     const instanceId = notification.params.instanceId
     const targets =
       instanceId === null
@@ -161,6 +178,37 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
     )
   }
 
+  const loggedLlm = async (
+    provider: ProviderId,
+    request: ChatRequest,
+  ): Promise<Result<ChatResponse, AgentLlmError>> => {
+    const result = await callLlm(provider, request)
+    if (!result.ok)
+      llmLog.warn('llm.error', {
+        provider,
+        model: request.model,
+        kind: result.error.kind,
+        status: result.error.kind === 'exception' ? null : (result.error.status ?? null),
+        detail: result.error.message,
+      })
+    return result
+  }
+
+  const toolFailed = <T>(
+    name: string,
+    stage: 'run' | 'plan',
+    result: Result<T, ToolError>,
+  ): Result<T, ToolError> => {
+    if (!result.ok)
+      toolLog.warn('tool.failed', {
+        tool: name,
+        stage,
+        kind: result.error.kind,
+        detail: result.error.message,
+      })
+    return result
+  }
+
   const eventFor = async (effect: WorkEffect): Promise<AgentEvent> => {
     const tools = registryExecutor(registry, { instanceId: effect.instanceId })
     const toolFailure = (cause: unknown): ToolError => ({
@@ -172,27 +220,36 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
         return {
           type: 'llm_response',
           requestId: effect.requestId,
-          result: await callLlm(effect.provider, effect.request),
+          result: await loggedLlm(effect.provider, effect.request),
         }
       case 'run_tool':
         return {
           type: 'tool_result',
           callId: effect.call.id,
-          result: await attempt(() => tools.run(effect.call.name, effect.call.input), toolFailure),
+          result: toolFailed(
+            effect.call.name,
+            'run',
+            await attempt(() => tools.run(effect.call.name, effect.call.input), toolFailure),
+          ),
         }
       case 'plan_change': {
-        const result = await attempt(
-          () => tools.plan(effect.call.name, effect.call.input),
-          toolFailure,
+        const result = toolFailed(
+          effect.call.name,
+          'plan',
+          await attempt(() => tools.plan(effect.call.name, effect.call.input), toolFailure),
         )
         return { type: 'change_planned', callId: effect.call.id, at: now(), result }
       }
-      case 'apply_change':
-        return {
-          type: 'change_applied',
-          proposalId: effect.proposalId,
-          report: await tools.apply(effect.toolName, effect.rows),
-        }
+      case 'apply_change': {
+        const report = await tools.apply(effect.toolName, effect.rows)
+        if (report.failed.length > 0)
+          toolLog.warn('tool.apply_failed', {
+            tool: effect.toolName,
+            failed: report.failed.length,
+            details: report.failed.map((row) => row.message),
+          })
+        return { type: 'change_applied', proposalId: effect.proposalId, report }
+      }
     }
   }
 
@@ -237,6 +294,22 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
       )
       return route('keys.status', { method: 'keys.status', providers })
     },
+    'diagnostics.export': async (params) => {
+      const environment = (options.environment ?? (() => systemEnvironment()))()
+      const bundle = diagnosticsBundle({
+        generatedAt: now(),
+        versions: environment.versions,
+        os: environment.os,
+        records: logger.recent(),
+        includeContent: params.includeContent === true,
+        secrets: secrets(),
+      })
+      return ok({
+        includesContent: bundle.report.includesContent,
+        json: bundle.json,
+        text: bundle.text,
+      })
+    },
     'provider.select': async (params) =>
       route('provider.select', {
         method: 'provider.select',
@@ -249,6 +322,14 @@ export const startCompanion = async (options: CompanionOptions): Promise<Compani
     path: options.socketPath,
     companion: options.name ?? companionName,
     handlers,
+    onRequest: (report) => rpcLog.info('rpc.request', report),
+    onProblem: (problem) =>
+      rpcLog.warn('rpc.problem', {
+        kind: problem.kind,
+        ...(problem.kind === 'decode'
+          ? { code: problem.failure.error.code, detail: problem.failure.error.message }
+          : { frame: problem.event.kind }),
+      }),
     onHello: (hello, session) => {
       sessions.set(hello.instanceId, session)
       commit(handleHello(state, hello))

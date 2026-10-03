@@ -22,6 +22,7 @@ export const sampleParams: { readonly [M in RequestMethod]: ParamsOf<M> } = {
   'keys.set': { provider: 'anthropic', key: 'sk-ant-test' },
   'keys.status': {},
   'provider.select': { provider: 'openai' },
+  'diagnostics.export': { includeContent: false },
 }
 
 export const sampleResults: { readonly [M in RequestMethod]: ResultOf<M> } = {
@@ -38,6 +39,11 @@ export const sampleResults: { readonly [M in RequestMethod]: ResultOf<M> } = {
     activeProvider: 'anthropic',
   },
   'provider.select': { activeProvider: 'openai' },
+  'diagnostics.export': {
+    includesContent: false,
+    json: '{"format":"clogic-diagnostics"}\n',
+    text: 'clogic diagnostics\n',
+  },
 }
 
 export const samplePluginNotifications: {

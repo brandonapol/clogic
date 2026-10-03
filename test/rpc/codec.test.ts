@@ -45,6 +45,7 @@ describe('method names', () => {
       'keys.set',
       'keys.status',
       'provider.select',
+      'diagnostics.export',
     ])
     expect(pluginMethods).toEqual(['meter', 'context.changed'])
     expect(companionMethods).toEqual([
@@ -124,6 +125,24 @@ describe('plugin to companion', () => {
         },
       },
     })
+  })
+
+  it('accepts diagnostics.export without params fields and leaves content off', () => {
+    const line = JSON.stringify({ jsonrpc: '2.0', id: 4, method: 'diagnostics.export', params: {} })
+    expect(decodeFromPlugin(line)).toEqual({
+      ok: true,
+      value: { kind: 'request', id: 4, method: 'diagnostics.export', params: {} },
+    })
+  })
+
+  it('rejects a non-boolean includeContent', () => {
+    const line = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 5,
+      method: 'diagnostics.export',
+      params: { includeContent: 'yes' },
+    })
+    expect(failureCode(line, 'plugin')).toBe(rpcErrorCodes.invalidParams)
   })
 
   it('rejects an empty chat message and an empty instance id', () => {

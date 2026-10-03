@@ -13,6 +13,7 @@ import {
   type ProtocolProblem,
   type RequestHandlers,
   type RpcClient,
+  type RequestReport,
   type RpcServer,
   type ServerOptions,
 } from '../../src/rpc/socket.js'
@@ -55,6 +56,7 @@ const handlers: RequestHandlers = {
   'keys.set': async (params) => ok({ provider: params.provider, configured: true }),
   'keys.status': async () => ok(sampleResults['keys.status']),
   'provider.select': async () => err({ code: 1001, message: 'No key for xai' }),
+  'diagnostics.export': async () => ok(sampleResults['diagnostics.export']),
 }
 
 let dir = ''
@@ -353,5 +355,26 @@ describe('connection lifecycle', () => {
 
   it('rejects connect when nothing is listening', async () => {
     await expect(connect({ path })).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+})
+
+describe('request reports', () => {
+  it('reports each request with its method and outcome but never its params', async () => {
+    const reports: RequestReport[] = []
+    await start({ onRequest: (report) => reports.push(report) })
+    const client = await open()
+    await client.request('keys.status', {})
+    await greet(client)
+    await client.request('keys.set', sampleParams['keys.set'])
+    await client.request('provider.select', { provider: 'xai' })
+
+    expect(reports.map(({ method, ok: success, code }) => [method, success, code])).toEqual([
+      ['keys.status', false, rpcErrorCodes.handshakeRequired],
+      ['session.hello', true, null],
+      ['keys.set', true, null],
+      ['provider.select', false, 1001],
+    ])
+    expect(reports.every((report) => report.durationMs >= 0)).toBe(true)
+    expect(JSON.stringify(reports)).not.toContain(sampleParams['keys.set'].key)
   })
 })
