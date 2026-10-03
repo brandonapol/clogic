@@ -123,14 +123,46 @@ Notes:
 
 ffmpeg 9.0.1 decoded every format tested (`test/analysis/adapter.test.ts`, 0.5 s stereo tones, peak
 level checked to 3 decimals): WAV 16-bit, 24-bit and 32-bit float; AIFF 24-bit and 32-bit float; CAF
-24-bit and 32-bit float; ALAC 24-bit in `.m4a`. ffprobe reports `bits_per_raw_sample` (or
+24-bit and 32-bit float; ALAC 24-bit in `.m4a` and `.caf`. ffprobe reports `bits_per_raw_sample` (or
 `bits_per_sample` for float) correctly for all of them. 5.1 files are downmixed to stereo with `-ac 2`
 for the spectral / stereo pass; loudness is measured on the original layout.
 
-**Open:** ALAC in a CAF container _written by ffmpeg_ decodes 576 samples short (23,424 of 24,000
-frames; the same audio in `.m4a` decodes in full). Whether this affects CAF files written by Logic is
-unknown and needs a real Logic bounce. All test files were written by ffmpeg, not Logic, so Logic's own
-WAV / AIFF / CAF headers (e.g. extra chunks) are untested.
+**ALAC in CAF short decode (resolved 2026-10-03, ffmpeg n9.0.1, Linux).** ALAC in a CAF container
+written by ffmpeg used to decode 576 frames short (23,424 of 24,000; the same audio in `.m4a` decoded in
+full). Reproduce:
+
+```sh
+S='aevalsrc=0.5*sin(2*PI*1000*t)|0.25*sin(2*PI*1000*t):s=48000:d=0.5'
+ffmpeg -v error -f lavfi -i "$S" -c:a alac -sample_fmt s32p a.caf
+ffmpeg -v error -i a.caf -f f32le - | wc -c                       # 187392 bytes = 23424 frames
+ffprobe -v error -show_entries stream=duration_ts,nb_frames -of compact a.caf  # duration_ts=24000
+ffprobe -v error -show_packets -of compact a.caf | tail -1
+# last packet: duration=3520, side_datum/skip_samples:discard_padding=576
+ffmpeg -v error -flags2 +skip_manual -i a.caf -af atrim=end_sample=24000 -f f32le - | wc -c  # 24000 frames
+```
+
+Root cause: the trailing padding is removed twice. The CAF `pakt` chunk declares 6 packets, 24,000
+valid frames, 0 priming and 576 remainder frames (6 × 4096 − 24,000). ffmpeg's CAF demuxer turns the
+remainder into `discard_padding=576` on the last packet, but the ALAC bitstream's last frame already
+holds only the 3,520 real samples, so the decoder drops 576 real samples on top. Probing is not the
+problem: ffprobe reports the correct 0.5 s / 24,000 frames from the packet table; only decoding is short.
+The `.m4a` muxer writes no discard padding, so it decodes in full. Loudness was affected too, because
+`ebur128` runs on the same decode.
+
+Fix (`src/analysis/adapter.ts`): for ALAC in CAF, both the PCM decode and the `ebur128` pass use
+`-flags2 +skip_manual` (the decoder does not apply skip / discard side data) followed by
+`atrim=end_sample=<frames from probe>`. That is correct both for this ffmpeg-written file and for a CAF
+whose last ALAC packet is a full 4,096 frames with the padding as real samples. It assumes zero priming,
+which holds for ALAC (no encoder delay; `pakt` priming is 0 here). `skip_manual` is **not** used for
+other codecs: on MP3 and AAC it keeps the encoder delay (25,344 and 25,600 frames instead of 24,000).
+As a guard, any PCM / ALAC / FLAC decode more than one frame shorter than the probed length returns a
+`short-decode` error value instead of analysing truncated audio; lossy codecs are not checked because
+their probed duration can be an estimate. Covered by `test/analysis/adapter.test.ts` ("decodes caf alac
+24-bit", "measures CAF ALAC loudness including the final packet", "decode length checks").
+
+Whether Logic-written ALAC CAF files hit the same double trim is still unknown and needs a real Logic
+bounce. All test files were written by ffmpeg, not Logic, so Logic's own WAV / AIFF / CAF headers (e.g.
+extra chunks) are untested.
 
 A pure JS / WASM decoder was **not** evaluated: ffmpeg already covers decoding and loudness, so the only
 reason to replace it is the bundling / licence question in SPIKE-010 / SPIKE-011.

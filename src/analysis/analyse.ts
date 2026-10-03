@@ -3,7 +3,7 @@ import {
   DEFAULT_TOOLS,
   decodePcm,
   listAudioFiles,
-  measureLoudness,
+  measureLoudnessOf,
   probeAudio,
   type Tools,
 } from './adapter.js'
@@ -27,7 +27,7 @@ const analyse = async (
   if (!info.ok) return info
   const [pcm, loudness] = await Promise.all([
     decodePcm(info.value, tools),
-    measureLoudness(path, tools),
+    measureLoudnessOf(info.value, tools),
   ])
   if (!pcm.ok) return pcm
   if (!loudness.ok) return loudness
