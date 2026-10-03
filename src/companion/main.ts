@@ -2,8 +2,9 @@
 import { chat } from '../llm/client.js'
 import { keychainKeyStore } from '../llm/keychain.js'
 import { defaultAnalysisDeps } from '../tools/analysis.js'
+import { defaultStemsDeps } from '../tools/stems/index.js'
 import { startCompanion } from './service.js'
-import { readTools } from './tools.js'
+import { companionTools } from './tools.js'
 
 const socketPath = process.argv[2] ?? process.env['CLOGIC_SOCKET']
 
@@ -16,7 +17,7 @@ const companion = await startCompanion({
   socketPath,
   keyStore: keychainKeyStore(),
   llmClient: (provider, apiKey) => (request) => chat(fetch, provider, apiKey, request),
-  tools: readTools(defaultAnalysisDeps),
+  tools: companionTools({ analysis: defaultAnalysisDeps, stems: defaultStemsDeps }),
 })
 
 process.stderr.write(`clogic companion listening on ${companion.path}\n`)

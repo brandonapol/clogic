@@ -1,6 +1,8 @@
 import { runSearchLogicDocs, searchLogicDocsTool } from '../docs/tool.js'
 import { err, ok } from '../llm/result.js'
 import { analysisTools, type AnalysisDeps } from '../tools/analysis.js'
+import { mixerTools, type MixerDeps } from '../tools/mixer/index.js'
+import { stemsTools, type StemsDeps } from '../tools/stems/index.js'
 import type { ReadTool, Tool } from '../tools/types.js'
 
 export const searchLogicDocs: ReadTool = {
@@ -20,7 +22,22 @@ export const searchLogicDocs: ReadTool = {
   },
 }
 
-export const readTools = (deps: AnalysisDeps): readonly Tool[] => [
-  ...analysisTools(deps),
+export type ReadToolDeps = {
+  readonly analysis: AnalysisDeps
+  readonly stems: StemsDeps
+}
+
+export type CompanionToolDeps = ReadToolDeps & {
+  readonly mixer?: MixerDeps
+}
+
+export const readTools = (deps: ReadToolDeps): readonly Tool[] => [
+  ...analysisTools(deps.analysis),
+  ...stemsTools(deps.stems),
   searchLogicDocs,
+]
+
+export const companionTools = (deps: CompanionToolDeps): readonly Tool[] => [
+  ...readTools(deps),
+  ...(deps.mixer === undefined ? [] : mixerTools(deps.mixer)),
 ]

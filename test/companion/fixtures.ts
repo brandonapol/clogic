@@ -6,7 +6,7 @@ import {
   type Companion,
   type LlmClientFactory,
 } from '../../src/companion/service.js'
-import { readTools } from '../../src/companion/tools.js'
+import { readTools, type ReadToolDeps } from '../../src/companion/tools.js'
 import { memoryKeyStore, type KeyStore } from '../../src/llm/keystore.js'
 import { ok } from '../../src/llm/result.js'
 import type { ChatRequest, ChatResponse, ProviderId } from '../../src/llm/types.js'
@@ -14,8 +14,11 @@ import type { CompanionNotification } from '../../src/rpc/messages.js'
 import { connect, type RpcClient } from '../../src/rpc/socket.js'
 import type { ChangeRow, Tool } from '../../src/tools/types.js'
 import { analysisDeps, faderTool } from '../agent/fixtures.js'
+import { fakeDeps } from '../tools/stems/fixtures.js'
 
 export const instanceId = 'instance-1'
+
+export const toolDeps: ReadToolDeps = { analysis: analysisDeps, stems: fakeDeps({}).deps }
 
 export const anthropicKey = 'sk-ant-test-FAKEFAKEFAKEFAKE'
 export const openaiKey = 'sk-proj-test-FAKEFAKEFAKEFAKE'
@@ -82,7 +85,7 @@ export const startHarness = async (options: HarnessOptions): Promise<Harness> =>
     socketPath: join(dir, 'c.sock'),
     keyStore: options.keyStore ?? memoryKeyStore({ anthropic: anthropicKey }),
     llmClient: options.llm,
-    tools: options.tools ?? [...readTools(analysisDeps), faderTool(applied)],
+    tools: options.tools ?? [...readTools(toolDeps), faderTool(applied)],
     ...(options.provider === undefined ? {} : { provider: options.provider }),
     now: options.now ?? (() => Date.parse('2026-10-02T12:00:00Z')),
   })
