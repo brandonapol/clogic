@@ -8,6 +8,9 @@
   "engines": {
     "node": ">=22"
   },
+  "bin": {
+    "clogic-companion": "dist/companion/main.js"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
